@@ -9,7 +9,6 @@
 import { execSync } from 'child_process';
 import { homedir } from 'os';
 import { join } from 'path';
-import fetch from 'node-fetch';
 import { TOKEN_REFRESH_INTERVAL_MS, ANTIGRAVITY_AUTH_PORT } from './constants.js';
 
 // Cache for the extracted token
@@ -139,27 +138,6 @@ export async function getToken() {
 }
 
 /**
- * Get the full configuration from Antigravity
- */
-export async function getConfig() {
-    if (needsRefresh()) {
-        await getToken(); // This will refresh the cache
-    }
-    return cachedConfig;
-}
-
-/**
- * Get available models from the cached config
- */
-export async function getAvailableModels() {
-    const config = await getConfig();
-    if (!config?.initialUserStatus?.cascadeModelConfigData?.clientModelConfigs) {
-        return [];
-    }
-    return config.initialUserStatus.cascadeModelConfigData.clientModelConfigs;
-}
-
-/**
  * Force refresh the token (useful if requests start failing)
  */
 export async function forceRefresh() {
@@ -169,13 +147,7 @@ export async function forceRefresh() {
     return getToken();
 }
 
-// Alias for forceRefresh
-export const refreshToken = forceRefresh;
-
 export default {
     getToken,
-    getConfig,
-    getAvailableModels,
-    forceRefresh,
-    refreshToken
+    forceRefresh
 };

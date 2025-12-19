@@ -10,11 +10,218 @@
 import crypto from 'crypto';
 import { MODEL_MAPPINGS } from './constants.js';
 
+// Default thinking budget (16K tokens)
+const DEFAULT_THINKING_BUDGET = 16000;
+// Claude thinking models need larger max output tokens
+const CLAUDE_THINKING_MAX_OUTPUT_TOKENS = 64000;
+
 /**
  * Map Anthropic model name to Antigravity model name
  */
 export function mapModelName(anthropicModel) {
     return MODEL_MAPPINGS[anthropicModel] || anthropicModel;
+}
+
+/**
+ * Check if a part is a thinking block
+ */
+function isThinkingPart(part) {
+    return part.type === 'thinking' ||
+        part.type === 'redacted_thinking' ||
+        part.thinking !== undefined ||
+        part.thought === true;
+}
+
+/**
+ * Check if a thinking part has a valid signature (>= 50 chars)
+ */
+function hasValidSignature(part) {
+    const signature = part.thought === true ? part.thoughtSignature : part.signature;
+    return typeof signature === 'string' && signature.length >= 50;
+}
+
+/**
+ * Sanitize a thinking part by keeping only allowed fields
+ */
+function sanitizeThinkingPart(part) {
+    // Gemini-style thought blocks: { thought: true, text, thoughtSignature }
+    if (part.thought === true) {
+        const sanitized = { thought: true };
+        if (part.text !== undefined) sanitized.text = part.text;
+        if (part.thoughtSignature !== undefined) sanitized.thoughtSignature = part.thoughtSignature;
+        return sanitized;
+    }
+
+    // Anthropic-style thinking blocks: { type: "thinking", thinking, signature }
+    if (part.type === 'thinking' || part.thinking !== undefined) {
+        const sanitized = { type: 'thinking' };
+        if (part.thinking !== undefined) sanitized.thinking = part.thinking;
+        if (part.signature !== undefined) sanitized.signature = part.signature;
+        return sanitized;
+    }
+
+    return part;
+}
+
+/**
+ * Filter content array, keeping only thinking blocks with valid signatures.
+ * Since signature_delta transmits signatures properly, cache is no longer needed.
+ */
+function filterContentArray(contentArray) {
+    const filtered = [];
+
+    for (const item of contentArray) {
+        if (!item || typeof item !== 'object') {
+            filtered.push(item);
+            continue;
+        }
+
+        if (!isThinkingPart(item)) {
+            filtered.push(item);
+            continue;
+        }
+
+        // Keep items with valid signatures
+        if (hasValidSignature(item)) {
+            filtered.push(sanitizeThinkingPart(item));
+            continue;
+        }
+
+        // Drop unsigned thinking blocks
+        console.log('[FormatConverter] Dropping unsigned thinking block');
+    }
+
+    return filtered;
+}
+
+/**
+ * Filter unsigned thinking blocks from contents (Gemini format)
+ */
+export function filterUnsignedThinkingBlocks(contents) {
+    return contents.map(content => {
+        if (!content || typeof content !== 'object') return content;
+
+        if (Array.isArray(content.parts)) {
+            return { ...content, parts: filterContentArray(content.parts) };
+        }
+
+        return content;
+    });
+}
+
+/**
+ * Remove trailing unsigned thinking blocks from assistant messages.
+ * Claude/Gemini APIs require that assistant messages don't end with unsigned thinking blocks.
+ * This function removes thinking blocks from the end of content arrays.
+ */
+export function removeTrailingThinkingBlocks(content) {
+    if (!Array.isArray(content)) return content;
+    if (content.length === 0) return content;
+
+    // Work backwards from the end, removing thinking blocks
+    let endIndex = content.length;
+    for (let i = content.length - 1; i >= 0; i--) {
+        const block = content[i];
+        if (!block || typeof block !== 'object') break;
+
+        // Check if it's a thinking block (any format)
+        const isThinking = isThinkingPart(block);
+
+        if (isThinking) {
+            // Check if it has a valid signature
+            if (!hasValidSignature(block)) {
+                endIndex = i;
+            } else {
+                break; // Stop at signed thinking block
+            }
+        } else {
+            break; // Stop at first non-thinking block
+        }
+    }
+
+    if (endIndex < content.length) {
+        console.log('[FormatConverter] Removed', content.length - endIndex, 'trailing unsigned thinking blocks');
+        return content.slice(0, endIndex);
+    }
+
+    return content;
+}
+
+/**
+ * Filter thinking blocks: keep only those with valid signatures.
+ * Blocks without signatures are dropped (API requires signatures).
+ */
+export function restoreThinkingSignatures(content) {
+    if (!Array.isArray(content)) return content;
+
+    const originalLength = content.length;
+    const filtered = content.filter(block => {
+        if (!block || block.type !== 'thinking') return true;
+
+        // Keep blocks with valid signatures (>= 50 chars)
+        return block.signature && block.signature.length >= 50;
+    });
+
+    if (filtered.length < originalLength) {
+        console.log(`[FormatConverter] Dropped ${originalLength - filtered.length} unsigned thinking block(s)`);
+    }
+
+    return filtered;
+}
+
+/**
+ * Reorder content so that:
+ * 1. Thinking blocks come first (required when thinking is enabled)
+ * 2. Text blocks come in the middle (filtering out empty/useless ones)
+ * 3. Tool_use blocks come at the end (required before tool_result)
+ *
+ * Claude API requires that when thinking is enabled, assistant messages must start with thinking.
+ */
+export function reorderAssistantContent(content) {
+    if (!Array.isArray(content)) return content;
+    if (content.length <= 1) return content;
+
+    const thinkingBlocks = [];
+    const textBlocks = [];
+    const toolUseBlocks = [];
+    let droppedEmptyBlocks = 0;
+
+    for (const block of content) {
+        if (!block) continue;
+
+        if (block.type === 'thinking') {
+            thinkingBlocks.push(block);
+        } else if (block.type === 'tool_use') {
+            toolUseBlocks.push(block);
+        } else if (block.type === 'text') {
+            // Only keep text blocks with meaningful content
+            if (block.text && block.text.trim().length > 0) {
+                textBlocks.push(block);
+            } else {
+                droppedEmptyBlocks++;
+            }
+        } else {
+            // Other block types go in the text position
+            textBlocks.push(block);
+        }
+    }
+
+    if (droppedEmptyBlocks > 0) {
+        console.log(`[FormatConverter] Dropped ${droppedEmptyBlocks} empty text block(s)`);
+    }
+
+    const reordered = [...thinkingBlocks, ...textBlocks, ...toolUseBlocks];
+
+    // Log only if actual reordering happened (not just filtering)
+    if (reordered.length === content.length) {
+        const originalOrder = content.map(b => b?.type || 'unknown').join(',');
+        const newOrder = reordered.map(b => b?.type || 'unknown').join(',');
+        if (originalOrder !== newOrder) {
+            console.log('[FormatConverter] Reordered assistant content');
+        }
+    }
+
+    return reordered;
 }
 
 /**
@@ -33,7 +240,10 @@ function convertContentToParts(content, isClaudeModel = false) {
 
     for (const block of content) {
         if (block.type === 'text') {
-            parts.push({ text: block.text });
+            // Skip empty text blocks - they cause API errors
+            if (block.text && block.text.trim()) {
+                parts.push({ text: block.text });
+            }
         } else if (block.type === 'image') {
             // Handle image content
             if (block.source?.type === 'base64') {
@@ -107,19 +317,21 @@ function convertContentToParts(content, isClaudeModel = false) {
             }
 
             parts.push({ functionResponse });
-        } else if (block.type === 'thinking' || block.type === 'redacted_thinking') {
-            // Skip thinking blocks for Claude models - thinking is handled by the model itself
-            // For non-Claude models, convert to Google's thought format
-            if (!isClaudeModel && block.type === 'thinking') {
+        } else if (block.type === 'thinking') {
+            // Handle thinking blocks - only those with valid signatures
+            if (block.signature && block.signature.length >= 50) {
+                // Convert to Gemini format with signature
                 parts.push({
                     text: block.thinking,
-                    thought: true
+                    thought: true,
+                    thoughtSignature: block.signature
                 });
             }
+            // Unsigned thinking blocks are dropped upstream
         }
     }
 
-    return parts.length > 0 ? parts : [{ text: '' }];
+    return parts;
 }
 
 /**
@@ -142,7 +354,10 @@ function convertRole(role) {
  */
 export function convertAnthropicToGoogle(anthropicRequest) {
     const { messages, system, max_tokens, temperature, top_p, top_k, stop_sequences, tools, tool_choice, thinking } = anthropicRequest;
-    const isClaudeModel = (anthropicRequest.model || '').toLowerCase().includes('claude');
+    const modelName = anthropicRequest.model || '';
+    const isClaudeModel = modelName.toLowerCase().includes('claude');
+    const isClaudeThinkingModel = isClaudeModel && modelName.toLowerCase().includes('thinking');
+
 
     const googleRequest = {
         contents: [],
@@ -169,14 +384,46 @@ export function convertAnthropicToGoogle(anthropicRequest) {
         }
     }
 
-    // Convert messages to contents
+    // Add interleaved thinking hint for Claude thinking models with tools
+    if (isClaudeThinkingModel && tools && tools.length > 0) {
+        const hint = 'Interleaved thinking is enabled. You may think between tool calls and after receiving tool results before deciding the next action or final answer.';
+        if (!googleRequest.systemInstruction) {
+            googleRequest.systemInstruction = { parts: [{ text: hint }] };
+        } else {
+            const lastPart = googleRequest.systemInstruction.parts[googleRequest.systemInstruction.parts.length - 1];
+            if (lastPart && lastPart.text) {
+                lastPart.text = `${lastPart.text}\n\n${hint}`;
+            } else {
+                googleRequest.systemInstruction.parts.push({ text: hint });
+            }
+        }
+    }
+
+    // Convert messages to contents, then filter unsigned thinking blocks
     for (const msg of messages) {
-        const parts = convertContentToParts(msg.content, isClaudeModel);
+        let msgContent = msg.content;
+
+        // For assistant messages, process thinking blocks and reorder content
+        if ((msg.role === 'assistant' || msg.role === 'model') && Array.isArray(msgContent)) {
+            // First, try to restore signatures for unsigned thinking blocks from cache
+            msgContent = restoreThinkingSignatures(msgContent);
+            // Remove trailing unsigned thinking blocks
+            msgContent = removeTrailingThinkingBlocks(msgContent);
+            // Reorder: thinking first, then text, then tool_use
+            msgContent = reorderAssistantContent(msgContent);
+        }
+
+        const parts = convertContentToParts(msgContent, isClaudeModel);
         const content = {
             role: convertRole(msg.role),
             parts: parts
         };
         googleRequest.contents.push(content);
+    }
+
+    // Filter unsigned thinking blocks for Claude models
+    if (isClaudeModel) {
+        googleRequest.contents = filterUnsignedThinkingBlocks(googleRequest.contents);
     }
 
     // Generation config
@@ -196,9 +443,24 @@ export function convertAnthropicToGoogle(anthropicRequest) {
         googleRequest.generationConfig.stopSequences = stop_sequences;
     }
 
-    // Extended thinking is disabled for Claude models
-    // The model itself (e.g., claude-opus-4-5-thinking) handles thinking internally
-    // Enabling thinkingConfig causes signature issues in multi-turn conversations
+    // Enable thinking for Claude thinking models
+    if (isClaudeThinkingModel) {
+        // Get budget from request or use default
+        const thinkingBudget = thinking?.budget_tokens || DEFAULT_THINKING_BUDGET;
+
+        googleRequest.generationConfig.thinkingConfig = {
+            include_thoughts: true,
+            thinking_budget: thinkingBudget
+        };
+
+        // Ensure maxOutputTokens is large enough for thinking models
+        if (!googleRequest.generationConfig.maxOutputTokens ||
+            googleRequest.generationConfig.maxOutputTokens <= thinkingBudget) {
+            googleRequest.generationConfig.maxOutputTokens = CLAUDE_THINKING_MAX_OUTPUT_TOKENS;
+        }
+
+        console.log('[FormatConverter] Thinking enabled with budget:', thinkingBudget);
+    }
 
     // Convert tools to Google format
     if (tools && tools.length > 0) {
@@ -232,54 +494,48 @@ export function convertAnthropicToGoogle(anthropicRequest) {
 }
 
 /**
- * Sanitize JSON schema for Google API compatibility
- * Removes unsupported fields like additionalProperties
+ * Sanitize JSON Schema for Antigravity API compatibility.
+ * Uses allowlist approach - only permit known-safe JSON Schema features.
+ * Converts "const" to equivalent "enum" for compatibility.
+ * Generates placeholder schema for empty tool schemas.
  */
 function sanitizeSchema(schema) {
     if (!schema || typeof schema !== 'object') {
-        return schema;
+        // Empty/missing schema - generate placeholder with reason property
+        return {
+            type: 'object',
+            properties: {
+                reason: {
+                    type: 'string',
+                    description: 'Reason for calling this tool'
+                }
+            },
+            required: ['reason']
+        };
     }
 
-    // Fields to skip entirely - not compatible with Claude's JSON Schema 2020-12
-    const UNSUPPORTED_FIELDS = new Set([
-        '$schema',
-        'additionalProperties',
-        'default',
-        'anyOf',
-        'allOf',
-        'oneOf',
-        'minLength',
-        'maxLength',
-        'pattern',
-        'format',
-        'minimum',
-        'maximum',
-        'exclusiveMinimum',
-        'exclusiveMaximum',
-        'minItems',
-        'maxItems',
-        'uniqueItems',
-        'minProperties',
-        'maxProperties',
-        '$id',
-        '$ref',
-        '$defs',
-        'definitions',
-        'patternProperties',
-        'unevaluatedProperties',
-        'unevaluatedItems',
-        'if',
-        'then',
-        'else',
-        'not',
-        'contentEncoding',
-        'contentMediaType'
+    // Allowlist of permitted JSON Schema fields
+    const ALLOWED_FIELDS = new Set([
+        'type',
+        'description',
+        'properties',
+        'required',
+        'items',
+        'enum',
+        'title'
     ]);
 
     const sanitized = {};
+
     for (const [key, value] of Object.entries(schema)) {
-        // Skip unsupported fields
-        if (UNSUPPORTED_FIELDS.has(key)) {
+        // Convert "const" to "enum" for compatibility
+        if (key === 'const') {
+            sanitized.enum = [value];
+            continue;
+        }
+
+        // Skip fields not in allowlist
+        if (!ALLOWED_FIELDS.has(key)) {
             continue;
         }
 
@@ -289,21 +545,32 @@ function sanitizeSchema(schema) {
                 sanitized.properties[propKey] = sanitizeSchema(propValue);
             }
         } else if (key === 'items' && value && typeof value === 'object') {
-            // Handle items - could be object or array
             if (Array.isArray(value)) {
                 sanitized.items = value.map(item => sanitizeSchema(item));
-            } else if (value.anyOf || value.allOf || value.oneOf) {
-                // Replace complex items with permissive type
-                sanitized.items = {};
             } else {
                 sanitized.items = sanitizeSchema(value);
             }
         } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-            // Recursively sanitize nested objects that aren't properties/items
             sanitized[key] = sanitizeSchema(value);
         } else {
             sanitized[key] = value;
         }
+    }
+
+    // Ensure we have at least a type
+    if (!sanitized.type) {
+        sanitized.type = 'object';
+    }
+
+    // If object type with no properties, add placeholder
+    if (sanitized.type === 'object' && (!sanitized.properties || Object.keys(sanitized.properties).length === 0)) {
+        sanitized.properties = {
+            reason: {
+                type: 'string',
+                description: 'Reason for calling this tool'
+            }
+        };
+        sanitized.required = ['reason'];
     }
 
     return sanitized;
@@ -311,15 +578,15 @@ function sanitizeSchema(schema) {
 
 /**
  * Convert Google Generative AI response to Anthropic Messages API format
- * 
+ *
  * @param {Object} googleResponse - Google format response (the inner response object)
  * @param {string} model - The model name used
- * @param {boolean} isStreaming - Whether this is a streaming response
  * @returns {Object} Anthropic format response
  */
-export function convertGoogleToAnthropic(googleResponse, model, isStreaming = false) {
+export function convertGoogleToAnthropic(googleResponse, model) {
     // Handle the response wrapper
     const response = googleResponse.response || googleResponse;
+
 
     const candidates = response.candidates || [];
     const firstCandidate = candidates[0] || {};
@@ -328,18 +595,26 @@ export function convertGoogleToAnthropic(googleResponse, model, isStreaming = fa
 
     // Convert parts to Anthropic content blocks
     const anthropicContent = [];
-    let toolCallCounter = 0;
+    let hasToolCalls = false;
 
     for (const part of parts) {
         if (part.text !== undefined) {
-            // Skip thinking blocks (thought: true) - the model handles thinking internally
+            // Handle thinking blocks
             if (part.thought === true) {
-                continue;
+                const signature = part.thoughtSignature || '';
+
+                // Include thinking blocks in the response for Claude Code
+                anthropicContent.push({
+                    type: 'thinking',
+                    thinking: part.text,
+                    signature: signature
+                });
+            } else {
+                anthropicContent.push({
+                    type: 'text',
+                    text: part.text
+                });
             }
-            anthropicContent.push({
-                type: 'text',
-                text: part.text
-            });
         } else if (part.functionCall) {
             // Convert functionCall to tool_use
             // Use the id from the response if available, otherwise generate one
@@ -349,7 +624,7 @@ export function convertGoogleToAnthropic(googleResponse, model, isStreaming = fa
                 name: part.functionCall.name,
                 input: part.functionCall.args || {}
             });
-            toolCallCounter++;
+            hasToolCalls = true;
         }
     }
 
@@ -360,7 +635,7 @@ export function convertGoogleToAnthropic(googleResponse, model, isStreaming = fa
         stopReason = 'end_turn';
     } else if (finishReason === 'MAX_TOKENS') {
         stopReason = 'max_tokens';
-    } else if (finishReason === 'TOOL_USE' || toolCallCounter > 0) {
+    } else if (finishReason === 'TOOL_USE' || hasToolCalls) {
         stopReason = 'tool_use';
     }
 
@@ -382,108 +657,8 @@ export function convertGoogleToAnthropic(googleResponse, model, isStreaming = fa
     };
 }
 
-/**
- * Parse SSE data and extract the response object
- */
-export function parseSSEResponse(data) {
-    if (!data || !data.startsWith('data:')) {
-        return null;
-    }
-
-    const jsonStr = data.slice(5).trim();
-    if (!jsonStr) {
-        return null;
-    }
-
-    try {
-        return JSON.parse(jsonStr);
-    } catch (e) {
-        console.error('[FormatConverter] Failed to parse SSE data:', e.message);
-        return null;
-    }
-}
-
-/**
- * Convert a streaming chunk to Anthropic SSE format
- */
-export function convertStreamingChunk(googleChunk, model, index, isFirst, isLast) {
-    const events = [];
-    const response = googleChunk.response || googleChunk;
-    const candidates = response.candidates || [];
-    const firstCandidate = candidates[0] || {};
-    const content = firstCandidate.content || {};
-    const parts = content.parts || [];
-
-    if (isFirst) {
-        // message_start event
-        events.push({
-            type: 'message_start',
-            message: {
-                id: `msg_${crypto.randomBytes(16).toString('hex')}`,
-                type: 'message',
-                role: 'assistant',
-                content: [],
-                model: model,
-                stop_reason: null,
-                stop_sequence: null,
-                usage: { input_tokens: 0, output_tokens: 0 }
-            }
-        });
-
-        // content_block_start event
-        events.push({
-            type: 'content_block_start',
-            index: 0,
-            content_block: { type: 'text', text: '' }
-        });
-    }
-
-    // Extract text from parts and emit as delta
-    for (const part of parts) {
-        if (part.text !== undefined) {
-            events.push({
-                type: 'content_block_delta',
-                index: 0,
-                delta: { type: 'text_delta', text: part.text }
-            });
-        }
-    }
-
-    if (isLast) {
-        // content_block_stop event
-        events.push({
-            type: 'content_block_stop',
-            index: 0
-        });
-
-        // Determine stop reason
-        const finishReason = firstCandidate.finishReason;
-        let stopReason = 'end_turn';
-        if (finishReason === 'MAX_TOKENS') {
-            stopReason = 'max_tokens';
-        }
-
-        // Extract usage
-        const usageMetadata = response.usageMetadata || {};
-
-        // message_delta event
-        events.push({
-            type: 'message_delta',
-            delta: { stop_reason: stopReason, stop_sequence: null },
-            usage: { output_tokens: usageMetadata.candidatesTokenCount || 0 }
-        });
-
-        // message_stop event
-        events.push({ type: 'message_stop' });
-    }
-
-    return events;
-}
-
 export default {
     mapModelName,
     convertAnthropicToGoogle,
-    convertGoogleToAnthropic,
-    parseSSEResponse,
-    convertStreamingChunk
+    convertGoogleToAnthropic
 };

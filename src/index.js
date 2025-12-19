@@ -20,6 +20,7 @@ app.listen(PORT, () => {
 ║    POST /v1/messages  - Anthropic Messages API               ║
 ║    GET  /v1/models    - List available models                ║
 ║    GET  /health       - Health check                         ║
+║    GET  /accounts     - Account pool status                  ║
 ║    POST /refresh-token - Force token refresh                 ║
 ║                                                              ║
 ║  Usage with Claude Code:                                     ║
@@ -27,7 +28,10 @@ app.listen(PORT, () => {
 ║    export ANTHROPIC_API_KEY=dummy                            ║
 ║    claude                                                    ║
 ║                                                              ║
-║  Prerequisites:                                              ║
+║  Add Google accounts:                                        ║
+║    npm run accounts                                          ║
+║                                                              ║
+║  Prerequisites (if no accounts configured):                  ║
 ║    - Antigravity must be running                             ║
 ║    - Have a chat panel open in Antigravity                   ║
 ║                                                              ║

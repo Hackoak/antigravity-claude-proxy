@@ -3,20 +3,18 @@
  * Based on: https://github.com/NoeFabris/opencode-antigravity-auth
  */
 
-// Cloud Code API endpoints (in fallback order)
-export const ANTIGRAVITY_ENDPOINT_DAILY = 'https://daily-cloudcode-pa.sandbox.googleapis.com';
-export const ANTIGRAVITY_ENDPOINT_AUTOPUSH = 'https://autopush-cloudcode-pa.sandbox.googleapis.com';
-export const ANTIGRAVITY_ENDPOINT_PROD = 'https://cloudcode-pa.googleapis.com';
+import { homedir } from 'os';
+import { join } from 'path';
 
-// Endpoint fallback order (daily → autopush → prod)
+// Cloud Code API endpoints (in fallback order)
+const ANTIGRAVITY_ENDPOINT_DAILY = 'https://daily-cloudcode-pa.sandbox.googleapis.com';
+const ANTIGRAVITY_ENDPOINT_PROD = 'https://cloudcode-pa.googleapis.com';
+
+// Endpoint fallback order (daily → prod)
 export const ANTIGRAVITY_ENDPOINT_FALLBACKS = [
     ANTIGRAVITY_ENDPOINT_DAILY,
-    ANTIGRAVITY_ENDPOINT_AUTOPUSH,
     ANTIGRAVITY_ENDPOINT_PROD
 ];
-
-// Primary endpoint
-export const ANTIGRAVITY_ENDPOINT = ANTIGRAVITY_ENDPOINT_DAILY;
 
 // Required headers for Antigravity API requests
 export const ANTIGRAVITY_HEADERS = {
@@ -70,23 +68,30 @@ export const AVAILABLE_MODELS = [
 // Default project ID if none can be discovered
 export const DEFAULT_PROJECT_ID = 'rising-fact-p41fc';
 
-// Centralized configuration constants
-export const STREAMING_CHUNK_SIZE = 20;
 export const TOKEN_REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 export const REQUEST_BODY_LIMIT = '50mb';
 export const ANTIGRAVITY_AUTH_PORT = 9092;
 export const DEFAULT_PORT = 8080;
 
+// Multi-account configuration
+export const ACCOUNT_CONFIG_PATH = join(
+    homedir(),
+    '.config/antigravity-proxy/accounts.json'
+);
+export const DEFAULT_COOLDOWN_MS = 60 * 1000; // 1 minute default cooldown
+export const MAX_RETRIES = 5; // Max retry attempts across accounts
+
 export default {
-    ANTIGRAVITY_ENDPOINT,
     ANTIGRAVITY_ENDPOINT_FALLBACKS,
     ANTIGRAVITY_HEADERS,
     MODEL_MAPPINGS,
     AVAILABLE_MODELS,
     DEFAULT_PROJECT_ID,
-    STREAMING_CHUNK_SIZE,
     TOKEN_REFRESH_INTERVAL_MS,
     REQUEST_BODY_LIMIT,
     ANTIGRAVITY_AUTH_PORT,
-    DEFAULT_PORT
+    DEFAULT_PORT,
+    ACCOUNT_CONFIG_PATH,
+    DEFAULT_COOLDOWN_MS,
+    MAX_RETRIES
 };

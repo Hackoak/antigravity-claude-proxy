@@ -6,7 +6,17 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch src/index.js",
+    "accounts": "node src/accounts-cli.js",
+    "accounts:add": "node src/accounts-cli.js add",
+    "accounts:list": "node src/accounts-cli.js list",
+    "accounts:verify": "node src/accounts-cli.js verify",
+    "test": "node tests/run-all.cjs",
+    "test:signatures": "node tests/test-thinking-signatures.cjs",
+    "test:multiturn": "node tests/test-multiturn-thinking-tools.cjs",
+    "test:streaming": "node tests/test-multiturn-thinking-tools-streaming.cjs",
+    "test:interleaved": "node tests/test-interleaved-thinking.cjs",
+    "test:images": "node tests/test-images.cjs"
   },
   "keywords": [
     "claude",
@@ -19,7 +29,6 @@
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "node-fetch": "^3.3.2"
+    "express": "^4.18.2"
   }
 }
