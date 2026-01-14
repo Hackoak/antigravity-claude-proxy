@@ -9,6 +9,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { sendMessage, sendMessageStream, listModels, getModelQuotas, getSubscriptionTier } from './cloudcode/index.js';
+import { createCountTokensHandler } from './cloudcode/count-tokens.js';
 import { mountWebUI } from './webui/index.js';
 import { config } from './config.js';
 
@@ -597,17 +598,10 @@ app.get('/v1/models', async (req, res) => {
 });
 
 /**
- * Count tokens endpoint (not supported)
+ * Count tokens endpoint - Anthropic Messages API compatible
+ * Uses hybrid approach: local tokenizer for text, API for complex content (images, documents)
  */
-app.post('/v1/messages/count_tokens', (req, res) => {
-    res.status(501).json({
-        type: 'error',
-        error: {
-            type: 'not_implemented',
-            message: 'Token counting is not implemented. Use /v1/messages with max_tokens or configure your client to skip token counting.'
-        }
-    });
-});
+app.post('/v1/messages/count_tokens', createCountTokensHandler(accountManager));
 
 /**
  * Main messages endpoint - Anthropic Messages API compatible
