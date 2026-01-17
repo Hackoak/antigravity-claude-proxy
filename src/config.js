@@ -60,7 +60,7 @@ function loadConfig() {
         if (process.env.DEBUG === 'true') config.debug = true;
 
     } catch (error) {
-        console.error('[Config] Error loading config:', error);
+        logger.error('[Config] Error loading config:', error);
     }
 }
 

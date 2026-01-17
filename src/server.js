@@ -28,6 +28,9 @@ const FALLBACK_ENABLED = args.includes('--fallback') || process.env.FALLBACK ===
 
 const app = express();
 
+// Disable x-powered-by header for security
+app.disable('x-powered-by');
+
 // Initialize account manager (will be fully initialized on first request or startup)
 const accountManager = new AccountManager();
 
@@ -150,14 +153,31 @@ function parseError(error) {
 
 // Request logging middleware
 app.use((req, res, next) => {
-    // Skip logging for event logging batch unless in debug mode
-    if (req.path === '/api/event_logging/batch') {
-        if (logger.isDebugEnabled) {
-             logger.debug(`[${req.method}] ${req.path}`);
+    const start = Date.now();
+
+    // Log response on finish
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        const status = res.statusCode;
+        const logMsg = `[${req.method}] ${req.path} ${status} (${duration}ms)`;
+
+        // Skip standard logging for event logging batch unless in debug mode
+        if (req.path === '/api/event_logging/batch') {
+            if (logger.isDebugEnabled) {
+                logger.debug(logMsg);
+            }
+        } else {
+            // Colorize status code
+            if (status >= 500) {
+                logger.error(logMsg);
+            } else if (status >= 400) {
+                logger.warn(logMsg);
+            } else {
+                logger.info(logMsg);
+            }
         }
-    } else {
-        logger.info(`[${req.method}] ${req.path}`);
-    }
+    });
+
     next();
 });
 

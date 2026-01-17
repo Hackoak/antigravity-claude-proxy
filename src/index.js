@@ -34,7 +34,7 @@ const PORT = process.env.PORT || DEFAULT_PORT;
 const HOME_DIR = os.homedir();
 const CONFIG_DIR = path.join(HOME_DIR, '.antigravity-claude-proxy');
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     // Clear console for a clean start
     console.clear();
 
@@ -105,3 +105,21 @@ ${border}    ${align4(`export ANTHROPIC_BASE_URL=http://localhost:${PORT}`)}${bo
         logger.warn('Running in DEBUG mode - verbose logs enabled');
     }
 });
+
+// Graceful shutdown
+const shutdown = () => {
+    logger.info('Shutting down server...');
+    server.close(() => {
+        logger.success('Server stopped');
+        process.exit(0);
+    });
+
+    // Force close if it takes too long
+    setTimeout(() => {
+        logger.error('Could not close connections in time, forcefully shutting down');
+        process.exit(1);
+    }, 10000);
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
