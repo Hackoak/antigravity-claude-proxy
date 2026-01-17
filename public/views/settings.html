@@ -858,7 +858,7 @@
 
             <!-- Tab 4: Health Management -->
             <div x-show="activeTab === 'health'" x-data="window.Components.serverConfig()"
-                class="space-y-6 max-w-3xl animate-fade-in">
+                class="space-y-6 max-w-2xl animate-fade-in pb-10">
 
                 <!-- Auto Disable Settings -->
                 <div class="view-card border-neon-green/20 bg-neon-green/5">
@@ -876,73 +876,121 @@
 
                     <div class="space-y-4">
                         <div class="form-control">
-                            <label class="flex items-center justify-between cursor-pointer">
-                                <span class="text-sm font-medium text-gray-300" x-text="$store.global.t('healthAutoDisable')">Enable Auto-Disable</span>
-                                <input type="checkbox" class="toggle toggle-success toggle-sm"
-                                    :checked="healthConfig.autoDisableEnabled"
-                                    @change="updateHealthConfig({ autoDisableEnabled: $el.checked })"
-                                    aria-label="Enable Auto-Disable toggle">
-                            </label>
-                            <p class="text-[10px] text-gray-500 mt-1" x-text="$store.global.t('healthAutoDisableDesc')">
-                                When enabled, models will be automatically disabled for an account after consecutive failures.
-                            </p>
+                            <div class="flex items-center justify-between">
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-sm font-medium text-gray-200"
+                                        :class="healthConfig.autoDisableEnabled ? 'text-neon-green' : ''"
+                                        x-text="$store.global.t('healthAutoDisable')">Enable Auto-Disable</span>
+                                    <span class="text-[11px] text-gray-500" x-text="$store.global.t('healthAutoDisableDesc')">
+                                        Automatically disable failing account-model pairs</span>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" class="sr-only peer"
+                                        :checked="healthConfig.autoDisableEnabled === true"
+                                        @change="updateHealthConfig({ autoDisableEnabled: $el.checked })"
+                                        aria-label="Enable Auto-Disable toggle">
+                                    <div
+                                        class="w-9 h-5 bg-space-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-gray-600 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neon-green peer-checked:after:bg-white">
+                                    </div>
+                                </label>
+                            </div>
                         </div>
 
                         <div class="h-px bg-space-border/30 my-4"></div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Thresholds Section -->
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest"
+                                    x-text="$store.global.t('healthThresholds') || 'Threshold Settings'">Threshold Settings</span>
+                            </div>
+
                             <div class="form-control">
                                 <label class="label pt-0">
                                     <span class="label-text text-gray-400 text-xs" x-text="$store.global.t('healthThreshold')">Failure Threshold</span>
-                                    <span class="label-text-alt font-mono text-neon-green text-xs font-bold" x-text="healthConfig.consecutiveFailureThreshold"></span>
+                                    <span class="label-text-alt font-mono text-neon-green text-xs font-semibold" x-text="healthConfig.consecutiveFailureThreshold || 5"></span>
                                 </label>
-                                <input type="range" min="1" max="20" class="range range-xs range-success"
-                                    :value="healthConfig.consecutiveFailureThreshold"
-                                    @change="setFailureThreshold($el.value)"
-                                    title="Set failure threshold"
-                                    aria-label="Failure threshold slider">
-                                <p class="text-[10px] text-gray-500 mt-1" x-text="$store.global.t('healthThresholdDesc')">Consecutive failures before disabling</p>
+                                <div class="flex gap-3 items-center">
+                                    <input type="range" min="1" max="20" class="custom-range custom-range-green flex-1"
+                                        :value="healthConfig.consecutiveFailureThreshold || 5"
+                                        :style="`background-size: ${((healthConfig.consecutiveFailureThreshold || 5) - 1) / 19 * 100}% 100%`"
+                                        @input="setFailureThreshold($event.target.value)"
+                                        aria-label="Failure threshold slider">
+                                    <input type="number" min="1" max="20"
+                                        class="input input-xs input-bordered w-16 bg-space-800 border-space-border text-white font-mono text-center"
+                                        :value="healthConfig.consecutiveFailureThreshold || 5"
+                                        @change="setFailureThreshold($event.target.value)"
+                                        aria-label="Failure threshold value">
+                                </div>
+                                <p class="text-[9px] text-gray-600 mt-1 leading-tight" x-text="$store.global.t('healthThresholdDesc')">Consecutive failures before disabling</p>
                             </div>
 
                             <div class="form-control">
                                 <label class="label pt-0">
-                                    <span class="label-text text-gray-400 text-xs" x-text="$store.global.t('healthAutoRecovery')">Auto-Recovery (Hours)</span>
-                                    <span class="label-text-alt font-mono text-neon-green text-xs font-bold" x-text="getRecoveryHours() + 'h'"></span>
+                                    <span class="label-text text-gray-400 text-xs" x-text="$store.global.t('healthAutoRecovery')">Auto-Recovery Time</span>
+                                    <span class="label-text-alt font-mono text-neon-green text-xs font-semibold" x-text="getRecoveryHours() + 'h'"></span>
                                 </label>
-                                <input type="range" min="1" max="72" class="range range-xs range-success"
-                                    :value="getRecoveryHours()"
-                                    @change="setRecoveryHours($el.value)"
-                                    title="Adjust auto-recovery hours"
-                                    aria-label="Auto-recovery hours">
-                                <p class="text-[10px] text-gray-500 mt-1" x-text="$store.global.t('healthAutoRecoveryDesc')">Time before re-enabling a disabled model</p>
+                                <div class="flex gap-3 items-center">
+                                    <input type="range" min="1" max="72" class="custom-range custom-range-green flex-1"
+                                        :value="getRecoveryHours()"
+                                        :style="`background-size: ${(getRecoveryHours() - 1) / 71 * 100}% 100%`"
+                                        @input="setRecoveryHours($event.target.value)"
+                                        aria-label="Auto-recovery hours slider">
+                                    <input type="number" min="1" max="72"
+                                        class="input input-xs input-bordered w-16 bg-space-800 border-space-border text-white font-mono text-center"
+                                        :value="getRecoveryHours()"
+                                        @change="setRecoveryHours($event.target.value)"
+                                        aria-label="Auto-recovery hours value">
+                                </div>
+                                <p class="text-[9px] text-gray-600 mt-1 leading-tight" x-text="$store.global.t('healthAutoRecoveryDesc')">Time before re-enabling a disabled model</p>
                             </div>
                         </div>
 
-                        <div class="h-px bg-space-border/30 my-4"></div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="form-control">
-                                <label class="label pt-0">
-                                    <span class="label-text text-gray-400 text-xs" x-text="$store.global.t('healthWarnThreshold')">Warning Threshold (%)</span>
-                                    <span class="label-text-alt font-mono text-yellow-500 text-xs font-bold" x-text="healthConfig.warningThreshold + '%'"></span>
-                                </label>
-                                <input type="range" min="1" max="100" class="range range-xs range-warning"
-                                    :value="healthConfig.warningThreshold"
-                                    @change="setWarnThreshold($el.value)"
-                                    title="Set health warning threshold"
-                                    aria-label="Warning threshold">
+                        <!-- Health Score Thresholds Section -->
+                        <div class="space-y-4 pt-2 border-t border-space-border/10">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest"
+                                    x-text="$store.global.t('healthScoreThresholds') || 'Health Score Alerts'">Health Score Alerts</span>
                             </div>
 
                             <div class="form-control">
                                 <label class="label pt-0">
-                                    <span class="label-text text-gray-400 text-xs" x-text="$store.global.t('healthCriticalThreshold')">Critical Threshold (%)</span>
-                                    <span class="label-text-alt font-mono text-red-500 text-xs font-bold" x-text="healthConfig.criticalThreshold + '%'"></span>
+                                    <span class="label-text text-gray-400 text-xs" x-text="$store.global.t('healthWarnThreshold')">Warning Threshold</span>
+                                    <span class="label-text-alt font-mono text-yellow-500 text-xs font-semibold" x-text="(healthConfig.warningThreshold || 70) + '%'"></span>
                                 </label>
-                                <input type="range" min="1" max="100" class="range range-xs range-error"
-                                    :value="healthConfig.criticalThreshold"
-                                    @change="setCriticalThreshold($el.value)"
-                                    title="Set health critical threshold"
-                                    aria-label="Critical threshold">
+                                <div class="flex gap-3 items-center">
+                                    <input type="range" min="1" max="100" class="custom-range custom-range-yellow flex-1"
+                                        :value="healthConfig.warningThreshold || 70"
+                                        :style="`background-size: ${healthConfig.warningThreshold || 70}% 100%`"
+                                        @input="setWarnThreshold($event.target.value)"
+                                        aria-label="Warning threshold slider">
+                                    <input type="number" min="1" max="100"
+                                        class="input input-xs input-bordered w-16 bg-space-800 border-space-border text-white font-mono text-center"
+                                        :value="healthConfig.warningThreshold || 70"
+                                        @change="setWarnThreshold($event.target.value)"
+                                        aria-label="Warning threshold value">
+                                </div>
+                                <p class="text-[9px] text-gray-600 mt-1 leading-tight" x-text="$store.global.t('healthWarnDesc') || 'Health score below this triggers a warning indicator'">Health score below this triggers a warning indicator</p>
+                            </div>
+
+                            <div class="form-control">
+                                <label class="label pt-0">
+                                    <span class="label-text text-gray-400 text-xs" x-text="$store.global.t('healthCriticalThreshold')">Critical Threshold</span>
+                                    <span class="label-text-alt font-mono text-red-500 text-xs font-semibold" x-text="(healthConfig.criticalThreshold || 50) + '%'"></span>
+                                </label>
+                                <div class="flex gap-3 items-center">
+                                    <input type="range" min="1" max="100" class="custom-range custom-range-accent flex-1"
+                                        :value="healthConfig.criticalThreshold || 50"
+                                        :style="`background-size: ${healthConfig.criticalThreshold || 50}% 100%`"
+                                        @input="setCriticalThreshold($event.target.value)"
+                                        aria-label="Critical threshold slider">
+                                    <input type="number" min="1" max="100"
+                                        class="input input-xs input-bordered w-16 bg-space-800 border-space-border text-white font-mono text-center"
+                                        :value="healthConfig.criticalThreshold || 50"
+                                        @change="setCriticalThreshold($event.target.value)"
+                                        aria-label="Critical threshold value">
+                                </div>
+                                <p class="text-[9px] text-gray-600 mt-1 leading-tight" x-text="$store.global.t('healthCriticalDesc') || 'Health score below this triggers a critical alert'">Health score below this triggers a critical alert</p>
                             </div>
                         </div>
                     </div>
@@ -950,36 +998,57 @@
 
                 <!-- Data Retention -->
                 <div class="view-card border-space-border/50">
-                    <h4 class="text-sm font-bold text-gray-200 mb-4 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                        <span x-text="$store.global.t('healthDataRetention')">Data Retention</span>
-                    </h4>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 rounded bg-space-800 flex items-center justify-center text-neon-purple">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="text-sm font-semibold text-gray-200" x-text="$store.global.t('healthDataRetention')">Data Retention</span>
+                            <span class="text-[10px] text-gray-600 block" x-text="$store.global.t('healthDataRetentionDesc') || 'Configure event log storage limits'">Configure event log storage limits</span>
+                        </div>
+                    </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
                         <div class="form-control">
                             <label class="label pt-0">
-                                <span class="label-text text-gray-400 text-xs" x-text="$store.global.t('healthMaxEvents')">Max Events (Log)</span>
-                                <span class="label-text-alt font-mono text-xs font-bold" x-text="healthConfig.eventMaxCount"></span>
+                                <span class="label-text text-gray-400 text-xs" x-text="$store.global.t('healthMaxEvents')">Max Events</span>
+                                <span class="label-text-alt font-mono text-neon-purple text-xs font-semibold" x-text="(healthConfig.eventMaxCount || 10000).toLocaleString()"></span>
                             </label>
-                            <input type="range" min="1000" max="50000" step="1000" class="range range-xs range-secondary"
-                                :value="healthConfig.eventMaxCount"
-                                @change="setMaxEvents($el.value)"
-                                title="Set maximum events count"
-                                aria-label="Max events count slider">
+                            <div class="flex gap-3 items-center">
+                                <input type="range" min="1000" max="50000" step="1000" class="custom-range custom-range-purple flex-1"
+                                    :value="healthConfig.eventMaxCount || 10000"
+                                    :style="`background-size: ${((healthConfig.eventMaxCount || 10000) - 1000) / 490}% 100%`"
+                                    @input="setMaxEvents($event.target.value)"
+                                    aria-label="Max events count slider">
+                                <input type="number" min="1000" max="50000" step="1000"
+                                    class="input input-xs input-bordered w-20 bg-space-800 border-space-border text-white font-mono text-center"
+                                    :value="healthConfig.eventMaxCount || 10000"
+                                    @change="setMaxEvents($event.target.value)"
+                                    aria-label="Max events count value">
+                            </div>
+                            <p class="text-[9px] text-gray-600 mt-1 leading-tight" x-text="$store.global.t('healthMaxEventsDesc') || 'Maximum number of events to keep in history'">Maximum number of events to keep in history</p>
                         </div>
 
                         <div class="form-control">
                             <label class="label pt-0">
-                                <span class="label-text text-gray-400 text-xs" x-text="$store.global.t('healthEventRetention')">Event Retention (Days)</span>
-                                <span class="label-text-alt font-mono text-xs font-bold" x-text="healthConfig.eventRetentionDays + 'd'"></span>
+                                <span class="label-text text-gray-400 text-xs" x-text="$store.global.t('healthEventRetention')">Retention Period</span>
+                                <span class="label-text-alt font-mono text-neon-purple text-xs font-semibold" x-text="(healthConfig.eventRetentionDays || 7) + ' days'"></span>
                             </label>
-                            <input type="range" min="1" max="30" class="range range-xs range-secondary"
-                                :value="healthConfig.eventRetentionDays"
-                                @change="setRetentionDays($el.value)"
-                                title="Set event retention days"
-                                aria-label="Event retention days slider">
+                            <div class="flex gap-3 items-center">
+                                <input type="range" min="1" max="30" class="custom-range custom-range-purple flex-1"
+                                    :value="healthConfig.eventRetentionDays || 7"
+                                    :style="`background-size: ${((healthConfig.eventRetentionDays || 7) - 1) / 29 * 100}% 100%`"
+                                    @input="setRetentionDays($event.target.value)"
+                                    aria-label="Event retention days slider">
+                                <input type="number" min="1" max="30"
+                                    class="input input-xs input-bordered w-16 bg-space-800 border-space-border text-white font-mono text-center"
+                                    :value="healthConfig.eventRetentionDays || 7"
+                                    @change="setRetentionDays($event.target.value)"
+                                    aria-label="Event retention days value">
+                            </div>
+                            <p class="text-[9px] text-gray-600 mt-1 leading-tight" x-text="$store.global.t('healthRetentionDesc') || 'Events older than this will be automatically deleted'">Events older than this will be automatically deleted</p>
                         </div>
                     </div>
                 </div>
