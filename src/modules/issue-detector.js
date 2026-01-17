@@ -75,6 +75,9 @@ function getThresholds() {
 let issues = [];
 let isDirty = false;
 
+// Track processed event IDs to avoid duplicate processing
+const processedEventIds = new Set();
+
 // Rate limit tracking for streak detection
 const rateLimitHistory = new Map(); // account:model -> [timestamps]
 
@@ -279,6 +282,20 @@ function handleHealthChangeEvent(event) {
  * @param {Object} event - Event to process
  */
 function processEvent(event) {
+    // Skip if already processed
+    if (!event.id || processedEventIds.has(event.id)) {
+        return;
+    }
+    processedEventIds.add(event.id);
+
+    // Limit the size of processedEventIds to prevent memory leak
+    if (processedEventIds.size > 10000) {
+        // Remove oldest entries (convert to array, slice, convert back)
+        const idsArray = Array.from(processedEventIds);
+        processedEventIds.clear();
+        idsArray.slice(-5000).forEach(id => processedEventIds.add(id));
+    }
+
     switch (event.type) {
         case EventType.RATE_LIMIT:
             handleRateLimitEvent(event);
@@ -472,9 +489,13 @@ export function clearOldResolved(maxAgeMs = 24 * 60 * 60 * 1000) {
 export function initialize() {
     load();
 
-    // Subscribe to events from event manager
-    // Note: This requires event manager to support event subscriptions
-    // For now, we'll process events when they're retrieved
+    // Run initial detection from recent events
+    detectFromRecentEvents(60 * 60 * 1000); // Check last hour on startup
+
+    // Periodic detection every 30 seconds
+    setInterval(() => {
+        detectFromRecentEvents(5 * 60 * 1000); // Check last 5 minutes
+    }, 30 * 1000);
 
     // Auto-save every minute
     setInterval(() => {
