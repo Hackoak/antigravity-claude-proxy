@@ -17,7 +17,12 @@ import {
     CAPACITY_RETRY_DELAY_MS,
     MAX_CAPACITY_RETRIES
 } from '../constants.js';
-import { isRateLimitError, isAuthError, isEmptyResponseError } from '../errors.js';
+import {
+    isRateLimitError,
+    isAuthError,
+    isEmptyResponseError,
+    RateLimitError
+} from '../errors.js';
 import { formatDuration, sleep, isNetworkError } from '../utils/helpers.js';
 import { logger } from '../utils/logger.js';
 import { parseResetTime } from './rate-limit-parser.js';
@@ -407,7 +412,7 @@ export async function* sendMessageStream(anthropicRequest, accountManager, fallb
                 continue;
             }
             // Handle 5xx errors
-            if (error.message.includes('API error 5') || error.message.includes('500') || error.message.includes('503')) {
+            if (error.message.includes('API error 5') || error.message.includes('500') || error.message.includes('503') || error.message.includes('Max retries exceeded')) {
                 const statusCode = error.message.match(/5\d{2}/)?.[0] || '5xx';
                 accountManager.recordHealth(account.email, model, false, { message: 'Server error', code: statusCode });
                 accountManager.notifyFailure(account, model);
@@ -469,7 +474,13 @@ export async function* sendMessageStream(anthropicRequest, accountManager, fallb
         }
     }
 
-    throw new Error('Max retries exceeded');
+    // All retries exhausted
+    const minWaitMs = accountManager.getMinWaitTimeMs(model);
+
+    throw new RateLimitError(
+        `All accounts exhausted for ${model}. Quota will reset after ${formatDuration(minWaitMs)}.`,
+        minWaitMs
+    );
 }
 
 /**

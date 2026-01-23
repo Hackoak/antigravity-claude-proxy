@@ -290,9 +290,19 @@ Choose a strategy based on your needs:
 antigravity-claude-proxy start --strategy=hybrid    # Default: smart distribution
 antigravity-claude-proxy start --strategy=sticky    # Cache-optimized
 antigravity-claude-proxy start --strategy=round-robin  # Load-balanced
+
+# Enable model fallback (auto-switch to alternate model when quota exhausted)
+antigravity-claude-proxy start --fallback
 ```
 
 **Or via WebUI:** Settings → Server → Account Selection Strategy
+
+### Smart Health Protection
+
+The proxy doesn't just balance load; it actively monitors system health:
+- **Issue Detector**: Automatically identifies patterns like rate-limit streaks or authentication failures, providing actionable suggestions in the dashboard.
+- **Quota Poller**: A background worker that periodically refreshes account quotas even when the WebUI is closed, ensuring the protection logic always has fresh data.
+- **Health Matrix**: A real-time visualization grid showing the exact status of every account-model combination.
 
 ### How It Works
 
@@ -338,15 +348,17 @@ The proxy includes a built-in, modern web interface for real-time monitoring and
 ### Key Features
 
 - **Real-time Dashboard**: Monitor request volume, active accounts, model health, and subscription tier distribution.
+- **Health Matrix**: Visual grid showing the real-time status and health scores of every account-model combination.
 - **Visual Model Quota**: Track per-model usage and next reset times with color-coded progress indicators.
+- **Issue Dashboard**: Real-time system alerts and actionable suggestions for troubleshooting.
 - **Account Management**: Add/remove Google accounts via OAuth, view subscription tiers (Free/Pro/Ultra) and quota status at a glance.
 - **Claude CLI Configuration**: Edit your `~/.claude/settings.json` directly from the browser.
 - **Persistent History**: Tracks request volume by model family for 30 days, persisting across server restarts.
 - **Time Range Filtering**: Analyze usage trends over 1H, 6H, 24H, 7D, or All Time periods.
 - **Smart Analysis**: Auto-select top 5 most used models or toggle between Family/Model views.
 - **Live Logs**: Stream server logs with level-based filtering and search.
-- **Advanced Tuning**: Configure retries, timeouts, and debug mode on the fly.
-- **Bilingual Interface**: Full support for English and Chinese (switch via Settings).
+- **Advanced Tuning**: Configure retries, timeouts, and background quota polling on the fly.
+- **Multi-language Support**: Full support for English, Chinese, Portuguese, Indonesian, and Turkish.
 
 ---
 

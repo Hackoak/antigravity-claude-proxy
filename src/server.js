@@ -812,6 +812,7 @@ app.post('/v1/messages', async (req, res) => {
                         logger.debug(`[API] Client disconnected during stream for ${requestId}`);
                         break;
                     }
+                    if (res.writableEnded || res.finished) break;
                     res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
                     // Flush after each event for real-time streaming
                     if (res.flush) res.flush();
@@ -820,20 +821,20 @@ app.post('/v1/messages', async (req, res) => {
                 if (!clientDisconnected) {
                     requestTracer.endTrace(requestId, requestTracer.TraceStatus.SUCCESS);
                 }
-                res.end();
+                if (!res.writableEnded && !res.finished) res.end();
 
             } catch (streamError) {
                 logger.error('[API] Stream error:', streamError);
 
                 const { errorType, errorMessage } = parseError(streamError);
 
-                if (!clientDisconnected) {
+                if (!clientDisconnected && !res.writableEnded && !res.finished) {
                     res.write(`event: error\ndata: ${JSON.stringify({
                         type: 'error',
                         error: { type: errorType, message: errorMessage }
                     })}\n\n`);
                 }
-                res.end();
+                if (!res.writableEnded && !res.finished) res.end();
                 // Throw to be caught by finally block
                 throw streamError;
 
@@ -886,12 +887,14 @@ app.post('/v1/messages', async (req, res) => {
 
         // Check if headers have already been sent (for streaming that failed mid-way)
         if (res.headersSent) {
-            logger.warn('[API] Headers already sent, writing error as SSE event');
-            res.write(`event: error\ndata: ${JSON.stringify({
-                type: 'error',
-                error: { type: errorType, message: errorMessage }
-            })}\n\n`);
-            res.end();
+            if (!res.writableEnded && !res.finished) {
+                logger.warn('[API] Headers already sent, writing error as SSE event');
+                res.write(`event: error\ndata: ${JSON.stringify({
+                    type: 'error',
+                    error: { type: errorType, message: errorMessage }
+                })}\n\n`);
+                res.end();
+            }
         } else {
             res.status(statusCode).json({
                 type: 'error',

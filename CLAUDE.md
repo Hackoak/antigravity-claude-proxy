@@ -74,6 +74,7 @@ src/
 ├── index.js                    # Entry point
 ├── server.js                   # Express server
 ├── constants.js                # Configuration values
+├── config.js                   # Global configuration management
 ├── errors.js                   # Custom error classes
 ├── fallback-config.js          # Model fallback mappings and helpers
 │
@@ -92,6 +93,8 @@ src/
 │   ├── index.js                # AccountManager class facade
 │   ├── storage.js              # Config file I/O and persistence
 │   ├── rate-limits.js          # Rate limit tracking and state
+│   ├── health.js               # Account health core logic
+│   ├── onboarding.js           # New account onboarding flow
 │   ├── credentials.js          # OAuth token and project handling
 │   └── strategies/             # Account selection strategies
 │       ├── index.js            # Strategy factory (createStrategy)
@@ -102,6 +105,7 @@ src/
 │       └── trackers/           # State trackers for hybrid strategy
 │           ├── index.js        # Re-exports trackers
 │           ├── health-tracker.js    # Account health scores
+│           ├── quota-tracker.js     # Quota-based prioritization
 │           └── token-bucket-tracker.js  # Client-side rate limiting
 │
 ├── auth/                       # Authentication
@@ -113,6 +117,10 @@ src/
 │   └── index.js                # Express router and API endpoints
 │
 ├── modules/                    # Feature modules
+│   ├── event-manager.js        # Global event bus
+│   ├── issue-detector.js       # Auto issue detection & suggestions
+│   ├── quota-poller.js         # Background quota polling
+│   ├── request-tracer.js       # Request lifecycle tracing
 │   └── usage-stats.js          # Request tracking and history persistence
 │
 ├── cli/                        # CLI tools
@@ -129,6 +137,7 @@ src/
 │
 └── utils/                      # Utilities
     ├── helpers.js              # formatDuration, sleep, isNetworkError
+    ├── claude-config.js        # Claude CLI settings management
     ├── logger.js               # Structured logging
     └── native-module-helper.js # Auto-rebuild for native modules
 ```
@@ -146,6 +155,7 @@ public/
 │   ├── app.js                  # Main application logic (Alpine.js)
 │   ├── config/                 # Application configuration
 │   │   └── constants.js        # Centralized UI constants and limits
+│   ├── translations/           # i18n support (en, zh, pt, etc.)
 │   ├── store.js                # Global state management
 │   ├── data-store.js           # Shared data store (accounts, models, quotas)
 │   ├── settings-store.js       # Settings management store
@@ -153,21 +163,27 @@ public/
 │   │   ├── dashboard.js        # Main dashboard orchestrator
 │   │   ├── account-manager.js  # Account list & OAuth handling
 │   │   ├── logs-viewer.js      # Live log streaming
+│   │   ├── health-config.js    # Health & quota protection UI
+│   │   ├── health-page.js      # Health status overview
+│   │   ├── model-manager.js    # Model-specific settings
+│   │   ├── models.js           # Models list view
 │   │   ├── claude-config.js    # CLI settings editor
 │   │   ├── server-config.js    # Server settings UI
 │   │   └── dashboard/          # Dashboard sub-modules
 │   │       ├── stats.js        # Account statistics calculation
 │   │       ├── charts.js       # Chart.js visualizations
-│   │       └── filters.js      # Chart filter state management
+│   │       ├── filters.js      # Chart filter state management
+│   │       └── health-matrix.js # Health visualization grid
 │   └── utils/                  # Frontend utilities
 │       ├── error-handler.js    # Centralized error handling with ErrorHandler.withLoading
-│       ├── account-actions.js  # Account operations service layer (NEW)
+│       ├── account-actions.js  # Account operations service layer
 │       ├── validators.js       # Input validation
 │       └── model-config.js     # Model configuration helpers
 └── views/                      # HTML partials (loaded dynamically)
     ├── dashboard.html
     ├── accounts.html
     ├── models.html
+    ├── health.html
     ├── settings.html
     └── logs.html
 ```
@@ -180,6 +196,8 @@ public/
   - `model-api.js`: Model listing, quota retrieval (`getModelQuotas()`), and subscription tier detection (`getSubscriptionTier()`)
 - **src/account-manager/**: Multi-account pool with configurable selection strategies, rate limit handling, and automatic cooldown
   - Strategies: `sticky` (cache-optimized), `round-robin` (load-balanced), `hybrid` (smart distribution)
+- **src/modules/issue-detector.js**: Analyzes events (rate limits, auth failures) and health data to detect patterns and generate actionable suggestions/alerts.
+- **src/modules/quota-poller.js**: Independent background worker that periodically polls account quotas and triggers protection thresholds.
 - **src/auth/**: Authentication including Google OAuth, token extraction, database access, and auto-rebuild of native modules
 - **src/format/**: Format conversion between Anthropic and Google Generative AI formats
 - **src/constants.js**: API endpoints, model mappings, fallback config, OAuth config, and all configuration values
@@ -192,7 +210,7 @@ public/
 - Three strategies available:
   - **Sticky** (`--strategy=sticky`): Best for prompt caching, stays on same account
   - **Round-Robin** (`--strategy=round-robin`): Maximum throughput, rotates every request
-  - **Hybrid** (`--strategy=hybrid`, default): Smart selection using health + tokens + LRU
+  - **Hybrid** (`--strategy=hybrid`, default): Smart selection using health + tokens + quota + LRU
 - Model-specific rate limiting via `account.modelRateLimits[modelId]`
 - Automatic switch only when rate-limited for > 2 minutes on the current model
 - Session ID derived from first user message hash for cache continuity
@@ -211,10 +229,11 @@ public/
    - Maximizes concurrent request distribution
 
 3. **Hybrid Strategy** (default, smart distribution):
-   - Uses health scores, token buckets, and LRU for selection
-   - Scoring formula: `score = (Health × 2) + ((Tokens / MaxTokens × 100) × 5) + (LRU × 0.1)`
+   - Uses health scores, token buckets, remaining quota, and LRU for selection
+   - Scoring formula: `score = (Health × 2) + ((Tokens / MaxTokens × 100) × 5) + (Quota × 3) + (LRU × 0.1)`
    - Health scores: Track success/failure patterns with passive recovery
    - Token buckets: Client-side rate limiting (50 tokens, 6 per minute regeneration)
+   - Quota Tracking: Prioritizes accounts with more remaining quota; excludes accounts with critically low quota (< 5%)
    - LRU freshness: Prefer accounts that have rested longer
    - Configuration in `src/config.js` under `accountSelection`
 
@@ -280,6 +299,11 @@ Each account object in `accounts.json` contains:
   - Skeleton loading screens for improved perceived performance
   - Empty state UX with actionable prompts
   - Loading states for all async operations
+  - **Multi-language support (i18n)**: Support for EN, ZH, PT, ID, TR with automatic detection.
+  - **Health Matrix**: Visual grid showing real-time status and health scores of every account-model combination.
+  - **Issue Dashboard**: Real-time alerts and actionable suggestions for rate limits, auth failures, and degraded health.
+  - **Model Management**: Per-model control for enabling/disabling, priority, and specific routing overrides.
+  - **Health & Quota Protection UI**: Integrated editor for configuring auto-cooldowns, failure thresholds, and background polling.
 - **Accessibility**:
   - ARIA labels on search inputs and icon buttons
   - Keyboard navigation support (Escape to clear search)
