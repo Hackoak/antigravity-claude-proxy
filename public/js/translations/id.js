@@ -388,6 +388,8 @@ window.translations.id = {
     github: "GitHub",
     noData: "Tidak ada data",
     fix: "Perbaiki",
+    privacy: "Privasi",
+    privacyMode: "Mode Privasi (Samarkan Akun)",
 
     // Error Messages
     operationFailed: "Operasi gagal",

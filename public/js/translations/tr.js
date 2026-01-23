@@ -427,4 +427,6 @@ window.translations.tr = {
     failLabel: "Başarısız:",
     streakLabel: "Seri:",
     noPresetsAvailable: "Mevcut ön ayar yok",
+    privacy: "Gizlilik",
+    privacyMode: "Gizlilik Modu (Hesapları Maskele)",
 };

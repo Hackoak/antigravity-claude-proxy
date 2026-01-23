@@ -349,6 +349,8 @@ window.translations.zh = {
     github: "GitHub",
     noData: "暂无数据",
     fix: "修复",
+    privacy: "隐私",
+    privacyMode: "隐私模式 (打码账号)",
 
     // 提示语与错误处理
     operationFailed: "操作失败",

@@ -433,6 +433,8 @@ window.translations.en = {
     failLabel: "Fail:",
     streakLabel: "Streak:",
     noPresetsAvailable: "No presets available",
+    privacy: "Privacy",
+    privacyMode: "Privacy Mode (Mask Accounts)",
     // Validation Messages
     mustBeValidNumber: "{fieldName} must be a valid number",
     mustBeAtLeast: "{fieldName} must be at least {min}",

@@ -22,6 +22,7 @@ window.Components.healthPage = () => ({
     },
     activeFilter: null, // 'healthy', 'warning', 'critical', 'disabled'
     pollInterval: null,
+    privacyMode: false,
 
     // 浮动 Tooltip 状态
     tooltip: {
@@ -224,6 +225,16 @@ window.Components.healthPage = () => ({
 
     formatScore(score) {
         return score === undefined || score === null ? '-' : Math.round(score) + '%';
+    },
+
+    maskEmail(email) {
+        if (!email) return '***';
+        const parts = email.split('@');
+        if (parts.length < 2) return email.substring(0, 3) + '***';
+        const name = parts[0];
+        const domain = parts[1];
+        if (name.length <= 2) return '*@' + domain;
+        return name.substring(0, 2) + '***@' + domain;
     },
 
     // Tooltip handlers

@@ -375,4 +375,6 @@ window.translations.pt = {
     failLabel: "Falha:",
     streakLabel: "Sequência:",
     noPresetsAvailable: "Nenhum preset disponível",
+    privacy: "Privacidade",
+    privacyMode: "Modo de Privacidade (Mascarar Contas)",
 };
