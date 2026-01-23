@@ -89,5 +89,19 @@ window.utils = {
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
         };
+    },
+
+    /**
+     * Add random jitter to an interval to prevent request synchronization
+     * @param {number} baseInterval - Base interval in milliseconds
+     * @param {number} percentage - Jitter percentage (default 10%)
+     * @returns {number} Interval with random jitter applied
+     *
+     * Example: jitter(5000, 10) returns a value between 4500-5500ms
+     * This prevents multiple clients from synchronizing their polling requests
+     */
+    jitter(baseInterval, percentage = 10) {
+        const variation = baseInterval * (percentage / 100);
+        return Math.floor(baseInterval + (Math.random() * 2 - 1) * variation);
     }
 };

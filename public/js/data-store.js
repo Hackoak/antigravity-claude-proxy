@@ -195,13 +195,13 @@ document.addEventListener('alpine:init', () => {
             // Perform immediate health check
             this.performHealthCheck();
 
-            // Schedule regular health checks every 15 seconds
+            // Schedule regular health checks every 15 seconds with jitter
             this.healthCheckTimer = setInterval(() => {
                 // Only perform health check if tab is visible
                 if (!document.hidden) {
                     this.performHealthCheck();
                 }
-            }, 15000);
+            }, window.utils.jitter(15000, 10));
         },
 
         stopHealthCheck() {

@@ -38,9 +38,10 @@ window.Components.issueBanner = () => ({
 
         // Start interval if not already running
         if (!this.pollInterval) {
+            // Apply jitter to prevent request synchronization across multiple clients
             this.pollInterval = setInterval(() => {
                 this.loadIssues(true);
-            }, 5000);
+            }, window.utils.jitter(5000, 10));
         }
     },
 

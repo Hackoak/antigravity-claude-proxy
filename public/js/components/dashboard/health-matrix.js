@@ -55,7 +55,7 @@ window.DashboardHealthMatrix.component = () => ({
         this.stopPolling();
         this.pollInterval = setInterval(() => {
             if (!document.hidden) this.loadMatrix(true);
-        }, 30000); // 30s poll
+        }, window.utils.jitter(30000, 10)); // 30s poll with jitter
     },
 
     stopPolling() {
