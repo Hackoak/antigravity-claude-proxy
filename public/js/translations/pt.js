@@ -169,6 +169,7 @@ window.translations.pt = {
     last6Hours: "Últimas 6H",
     last24Hours: "Últimas 24H",
     last7Days: "Últimos 7D",
+    last30Days: "Últimos 30D",
     allTime: "Todo o Período",
     quotaDistribution: "Distribuição de Cotas",
     resetsIn: "Reseta em {time}",

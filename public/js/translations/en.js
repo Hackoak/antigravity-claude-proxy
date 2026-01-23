@@ -193,6 +193,7 @@ window.translations.en = {
     last6Hours: "Last 6H",
     last24Hours: "Last 24H",
     last7Days: "Last 7D",
+    last30Days: "Last 30D",
     allTime: "All Time",
     groupBy: "Group By",
     // Additional

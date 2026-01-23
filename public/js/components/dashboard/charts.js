@@ -47,6 +47,90 @@ window.DashboardConstants = { FAMILY_COLORS, MODEL_COLORS };
 let _trendChartUpdateLock = false;
 
 /**
+ * Resample data based on time range to optimize chart performance
+ * Aggregates hourly data into larger time windows for long-range views
+ *
+ * @param {Array} sortedEntries - Array of [iso, hourData] sorted by timestamp
+ * @param {string} timeRange - Time range ('1h'|'6h'|'24h'|'7d'|'30d'|'all')
+ * @returns {Array} Resampled array of [windowKey, aggregatedData]
+ *
+ * Sampling Strategy:
+ *   - 1h/6h/24h: No resampling (1-hour granularity)
+ *   - 7d: 6-hour windows (168 points → 28 points)
+ *   - 30d/all: 1-day windows (~720 points → 30 points)
+ */
+window.DashboardCharts.resampleData = function(sortedEntries, timeRange) {
+    // No resampling needed for short ranges
+    if (['1h', '6h', '24h'].includes(timeRange)) {
+        return sortedEntries;
+    }
+
+    // Determine sampling interval
+    const samplingHours = timeRange === '7d' ? 6 : 24; // 6h for 7d, 24h for 30d/all
+
+    // Group entries into time windows
+    const windows = {};
+
+    sortedEntries.forEach(([iso, hourData]) => {
+        const timestamp = new Date(iso);
+
+        // Calculate window start time
+        const windowStart = new Date(timestamp);
+        windowStart.setMinutes(0, 0, 0);
+
+        if (samplingHours === 6) {
+            // Align to 6-hour boundaries: 00:00, 06:00, 12:00, 18:00
+            const hour = windowStart.getHours();
+            windowStart.setHours(Math.floor(hour / 6) * 6);
+        } else {
+            // Align to daily boundaries: 00:00
+            windowStart.setHours(0);
+        }
+
+        const windowKey = windowStart.toISOString();
+
+        if (!windows[windowKey]) {
+            windows[windowKey] = [];
+        }
+        windows[windowKey].push(hourData);
+    });
+
+    // Aggregate data within each window
+    const resampled = Object.entries(windows).map(([windowKey, hoursInWindow]) => {
+        const aggregated = { _total: 0 };
+
+        hoursInWindow.forEach(hourData => {
+            // Aggregate global total
+            aggregated._total += (hourData._total || 0);
+
+            // Aggregate family and model data
+            Object.entries(hourData).forEach(([family, familyData]) => {
+                if (family === '_total') return;
+
+                // Initialize family object
+                if (!aggregated[family]) {
+                    aggregated[family] = { _subtotal: 0 };
+                }
+
+                // Aggregate family subtotal
+                aggregated[family]._subtotal += (familyData._subtotal || 0);
+
+                // Aggregate individual models
+                Object.entries(familyData).forEach(([model, count]) => {
+                    if (model === '_subtotal') return;
+                    aggregated[family][model] = (aggregated[family][model] || 0) + count;
+                });
+            });
+        });
+
+        return [windowKey, aggregated];
+    });
+
+    // Sort by timestamp
+    return resampled.sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime());
+};
+
+/**
  * Convert hex color to rgba
  * @param {string} hex - Hex color string
  * @param {number} alpha - Alpha value (0-1)
@@ -152,7 +236,7 @@ window.DashboardCharts.updateCharts = function (component) {
     } catch(e) { console.warn(e); }
     canvas._chartInstance = null;
   }
-  
+
   // Also check component state as backup
   if (component.charts.quotaDistribution) {
      try {
@@ -160,7 +244,7 @@ window.DashboardCharts.updateCharts = function (component) {
      } catch(e) { }
      component.charts.quotaDistribution = null;
   }
-  
+
   // Also try Chart.js registry
   if (typeof Chart !== "undefined" && Chart.getChart) {
       const regChart = Chart.getChart(canvas);
@@ -302,11 +386,11 @@ window.DashboardCharts.updateCharts = function (component) {
          },
        },
     });
-    
+
     // SAVE INSTANCE TO CANVAS AND COMPONENT
     canvas._chartInstance = newChart;
     component.charts.quotaDistribution = newChart;
-    
+
   } catch (e) {
     console.error("Failed to create quota chart:", e);
   }
@@ -327,7 +411,7 @@ window.DashboardCharts.updateTrendChart = function (component) {
   console.log("[updateTrendChart] Starting update...");
 
   const canvas = document.getElementById("usageTrendChart");
-  
+
   // FORCE DESTROY: Check for existing chart on the canvas element property
   if (canvas) {
       if (canvas._chartInstance) {
@@ -338,7 +422,7 @@ window.DashboardCharts.updateTrendChart = function (component) {
         } catch(e) { console.warn(e); }
         canvas._chartInstance = null;
       }
-      
+
       // Also try Chart.js registry
       if (typeof Chart !== "undefined" && Chart.getChart) {
           const regChart = Chart.getChart(canvas);
@@ -401,8 +485,8 @@ window.DashboardCharts.updateTrendChart = function (component) {
     "[updateTrendChart] Canvas is ready, proceeding with chart creation"
   );
 
-  // Use filtered history data based on time range
-  const history = window.DashboardFilters.getFilteredHistoryData(component);
+  // Step 1: Get filtered history data based on time range
+  let history = window.DashboardFilters.getFilteredHistoryData(component);
   if (!history || Object.keys(history).length === 0) {
     console.warn("No history data available for trend chart (after filtering)");
     component.hasFilteredTrendData = false;
@@ -410,12 +494,19 @@ window.DashboardCharts.updateTrendChart = function (component) {
     return;
   }
 
+  // Step 2: Fill time gaps to ensure continuous time series
+  const cutoff = window.DashboardFilters.getTimeRangeCutoff(component.timeRange);
+  history = window.DashboardFilters.fillTimeGaps(history, cutoff);
+
   component.hasFilteredTrendData = true;
 
-  // Sort entries by timestamp for correct order
-  const sortedEntries = Object.entries(history).sort(
+  // Step 3: Sort entries by timestamp
+  let sortedEntries = Object.entries(history).sort(
     ([a], [b]) => new Date(a).getTime() - new Date(b).getTime()
   );
+
+  // Step 4: Resample data for long time ranges (7d/all)
+  sortedEntries = window.DashboardCharts.resampleData(sortedEntries, component.timeRange);
 
   // Determine if data spans multiple days (for smart label formatting)
   const timestamps = sortedEntries.map(([iso]) => new Date(iso));
@@ -427,9 +518,14 @@ window.DashboardCharts.updateTrendChart = function (component) {
     const timeRange = component.timeRange || '24h';
 
     if (timeRange === '7d') {
-      // Week view: show MM/DD
+      // 7-day view with 6-hour granularity: show MM/DD HH:00
+      const dateStr = date.toLocaleDateString([], { month: '2-digit', day: '2-digit' });
+      const hour = date.getHours();
+      return `${dateStr} ${hour.toString().padStart(2, '0')}:00`;
+    } else if (timeRange === '30d' || timeRange === 'all') {
+      // 30-day/All-time view with daily granularity: show MM/DD only
       return date.toLocaleDateString([], { month: '2-digit', day: '2-digit' });
-    } else if (isMultiDay || timeRange === 'all') {
+    } else if (isMultiDay) {
       // Multi-day data: show MM/DD HH:MM
       return date.toLocaleDateString([], { month: '2-digit', day: '2-digit' }) + ' ' +
              date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -556,6 +652,9 @@ window.DashboardCharts.updateTrendChart = function (component) {
             ticks: {
               color: getThemeColor("--color-text-muted"),
               font: { size: 10 },
+              maxTicksLimit: 12,      // Limit max ticks to prevent label overlap
+              autoSkip: true,         // Auto-skip overlapping labels
+              autoSkipPadding: 15     // Minimum pixel padding between labels
             },
           },
           y: {
@@ -575,7 +674,7 @@ window.DashboardCharts.updateTrendChart = function (component) {
         },
       },
     });
-    
+
     // SAVE INSTANCE
     canvas._chartInstance = newChart;
     component.charts.usageTrend = newChart;

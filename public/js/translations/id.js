@@ -222,6 +222,7 @@ window.translations.id = {
     last6Hours: "6 Jam Terakhir",
     last24Hours: "24 Jam Terakhir",
     last7Days: "7 Hari Terakhir",
+    last30Days: "30 Hari Terakhir",
     allTime: "Semua Waktu",
     groupBy: "Kelompokkan",
 

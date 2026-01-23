@@ -271,6 +271,9 @@
                         <button @click="setTimeRange('7d')" class="filter-control-item"
                             :class="timeRange === '7d' ? 'text-neon-cyan' : 'text-gray-400'"
                             x-text="$store.global.t('last7Days')"></button>
+                        <button @click="setTimeRange('30d')" class="filter-control-item"
+                            :class="timeRange === '30d' ? 'text-neon-cyan' : 'text-gray-400'"
+                            x-text="$store.global.t('last30Days')"></button>
                         <button @click="setTimeRange('all')" class="filter-control-item"
                             :class="timeRange === 'all' ? 'text-neon-cyan' : 'text-gray-400'"
                             x-text="$store.global.t('allTime')"></button>

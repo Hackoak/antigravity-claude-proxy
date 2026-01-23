@@ -25,7 +25,7 @@ window.DashboardFilters = window.DashboardFilters || {};
  */
 window.DashboardFilters.getInitialState = function() {
     return {
-        timeRange: '24h',  // '1h', '6h', '24h', '7d', 'all'
+        timeRange: '24h',  // '1h', '6h', '24h', '7d', '30d', 'all'
         displayMode: 'model',
         selectedFamilies: [],
         selectedModels: {},
@@ -87,7 +87,7 @@ window.DashboardFilters.setDisplayMode = function(component, mode) {
 /**
  * Set time range filter
  * @param {object} component - Dashboard component instance
- * @param {string} range - '1h', '6h', '24h', '7d', 'all'
+ * @param {string} range - '1h', '6h', '24h', '7d', '30d', 'all'
  */
 window.DashboardFilters.setTimeRange = function(component, range) {
     component.timeRange = range;
@@ -108,6 +108,7 @@ window.DashboardFilters.getTimeRangeCutoff = function(range) {
         case '6h': return now - 6 * 60 * 60 * 1000;
         case '24h': return now - 24 * 60 * 60 * 1000;
         case '7d': return now - 7 * 24 * 60 * 60 * 1000;
+        case '30d': return now - 30 * 24 * 60 * 60 * 1000;
         default: return null; // 'all'
     }
 };
@@ -135,6 +136,59 @@ window.DashboardFilters.getFilteredHistoryData = function(component) {
 };
 
 /**
+ * Fill time gaps in sparse history data with zero-value entries
+ * Ensures continuous hourly time series for accurate trend visualization
+ *
+ * @param {object} sparseHistory - Sparse history data (only contains hours with activity)
+ * @param {number|null} cutoff - Time range start timestamp (ms), or null for 'all'
+ * @returns {object} Complete time series with gaps filled as { _total: 0 }
+ *
+ * @example
+ * Input:  { "2026-01-23T01:00:00.000Z": {...}, "2026-01-23T06:00:00.000Z": {...} }
+ * Output: { "2026-01-23T01:00:00.000Z": {...}, "2026-01-23T02:00:00.000Z": {_total:0}, ...}
+ */
+window.DashboardFilters.fillTimeGaps = function(sparseHistory, cutoff) {
+    if (!sparseHistory || Object.keys(sparseHistory).length === 0) {
+        return {};
+    }
+
+    // Determine time range
+    const now = new Date();
+    now.setMinutes(0, 0, 0); // Round down to current hour
+
+    let startTime;
+    if (cutoff) {
+        startTime = new Date(cutoff);
+        startTime.setMinutes(0, 0, 0); // Round down to hour
+    } else {
+        // 'all' mode: start from earliest data point
+        const timestamps = Object.keys(sparseHistory).map(iso => new Date(iso).getTime());
+        startTime = new Date(Math.min(...timestamps));
+        startTime.setMinutes(0, 0, 0);
+    }
+
+    // Build complete hourly series
+    const completeHistory = {};
+    const current = new Date(startTime);
+
+    while (current <= now) {
+        const iso = current.toISOString();
+
+        // Use existing data or inject zero-value placeholder
+        if (sparseHistory[iso]) {
+            completeHistory[iso] = sparseHistory[iso];
+        } else {
+            completeHistory[iso] = { _total: 0 };
+        }
+
+        // Move to next hour
+        current.setHours(current.getHours() + 1);
+    }
+
+    return completeHistory;
+};
+
+/**
  * Get time range label for display
  * @param {object} component - Dashboard component instance
  * @returns {string} Translated label
@@ -146,6 +200,7 @@ window.DashboardFilters.getTimeRangeLabel = function(component) {
         case '6h': return store.t('last6Hours');
         case '24h': return store.t('last24Hours');
         case '7d': return store.t('last7Days');
+        case '30d': return store.t('last30Days');
         default: return store.t('allTime');
     }
 };

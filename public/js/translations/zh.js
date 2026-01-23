@@ -192,6 +192,7 @@ window.translations.zh = {
     last6Hours: "最近 6 小时",
     last24Hours: "最近 24 小时",
     last7Days: "最近 7 天",
+    last30Days: "最近 30 天",
     allTime: "最后全部",
     groupBy: "分组方式",
     // Additional

@@ -172,6 +172,7 @@ window.translations.tr = {
     last6Hours: "Son 6S",
     last24Hours: "Son 24S",
     last7Days: "Son 7G",
+    last30Days: "Son 30G",
     allTime: "Tüm Zamanlar",
     groupBy: "Gruplama Ölçütü",
     // Additional
