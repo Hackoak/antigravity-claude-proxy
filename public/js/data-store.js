@@ -19,6 +19,7 @@ document.addEventListener('alpine:init', () => {
         connectionStatus: 'connecting',
         lastUpdated: '-',
         healthCheckTimer: null,
+        _activeFetchPromise: null, // Singleton pattern to prevent duplicate requests
 
         // Filters state
         filters: {
@@ -41,7 +42,7 @@ document.addEventListener('alpine:init', () => {
             // Watch filters to recompute
             // Alpine stores don't have $watch automatically unless inside a component?
             // We can manually call compute when filters change.
-            
+
             // Start health check monitoring
             this.startHealthCheck();
         },
@@ -66,7 +67,7 @@ document.addEventListener('alpine:init', () => {
                         this.models = data.models;
                         this.modelConfig = data.modelConfig || {};
                         this.usageHistory = data.usageHistory || {};
-                        
+
                         // Don't show loading on initial load if we have cache
                         this.initialLoad = false;
                         this.computeQuotaRows();
@@ -94,58 +95,71 @@ document.addEventListener('alpine:init', () => {
         },
 
         async fetchData() {
+            // Singleton pattern: If a fetch is already in progress, return the same promise
+            if (this._activeFetchPromise) {
+                console.log('Data fetch already in progress, reusing existing promise');
+                return this._activeFetchPromise;
+            }
+
             // Only show skeleton on initial load if we didn't restore from cache
             if (this.initialLoad) {
                 this.loading = true;
             }
-            try {
-                // Get password from global store
-                const password = Alpine.store('global').webuiPassword;
 
-                // Include history for dashboard (single API call optimization)
-                const url = '/account-limits?includeHistory=true';
-                const { response, newPassword } = await window.utils.request(url, {}, password);
+            // Create and store the promise
+            this._activeFetchPromise = (async () => {
+                try {
+                    // Get password from global store
+                    const password = Alpine.store('global').webuiPassword;
 
-                if (newPassword) Alpine.store('global').webuiPassword = newPassword;
+                    // Include history for dashboard (single API call optimization)
+                    const url = '/account-limits?includeHistory=true';
+                    const { response, newPassword } = await window.utils.request(url, {}, password);
 
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    if (newPassword) Alpine.store('global').webuiPassword = newPassword;
 
-                const data = await response.json();
-                this.accounts = data.accounts || [];
-                if (data.models && data.models.length > 0) {
-                    this.models = data.models;
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                    const data = await response.json();
+                    this.accounts = data.accounts || [];
+                    if (data.models && data.models.length > 0) {
+                        this.models = data.models;
+                    }
+                    this.modelConfig = data.modelConfig || {};
+
+                    // Store usage history if included (for dashboard)
+                    if (data.history) {
+                        this.usageHistory = data.history;
+                    }
+
+                    this.saveToCache(); // Save fresh data
+                    this.computeQuotaRows();
+
+                    this.lastUpdated = new Date().toLocaleTimeString();
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    const store = Alpine.store('global');
+                    store.showToast(store.t('connectionLost'), 'error');
+                } finally {
+                    this.loading = false;
+                    this.initialLoad = false; // Mark initial load as complete
+                    this._activeFetchPromise = null; // Clear the promise lock
                 }
-                this.modelConfig = data.modelConfig || {};
+            })();
 
-                // Store usage history if included (for dashboard)
-                if (data.history) {
-                    this.usageHistory = data.history;
-                }
-
-                this.saveToCache(); // Save fresh data
-                this.computeQuotaRows();
-
-                this.lastUpdated = new Date().toLocaleTimeString();
-            } catch (error) {
-                console.error('Fetch error:', error);
-                const store = Alpine.store('global');
-                store.showToast(store.t('connectionLost'), 'error');
-            } finally {
-                this.loading = false;
-                this.initialLoad = false; // Mark initial load as complete
-            }
+            return this._activeFetchPromise;
         },
 
         async performHealthCheck() {
             try {
                 // Get password from global store
                 const password = Alpine.store('global').webuiPassword;
-                
+
                 // Use lightweight endpoint (no quota fetching)
                 const { response, newPassword } = await window.utils.request('/api/config', {}, password);
-                
+
                 if (newPassword) Alpine.store('global').webuiPassword = newPassword;
-                
+
                 if (response.ok) {
                     this.connectionStatus = 'connected';
                 } else {
@@ -287,7 +301,7 @@ document.addEventListener('alpine:init', () => {
 
             this.quotaRows = rows.sort((a, b) => {
                 if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-                
+
                 let valA = a[sortCol];
                 let valB = b[sortCol];
 
