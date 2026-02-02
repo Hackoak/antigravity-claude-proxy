@@ -42,6 +42,7 @@ async function sendStreamingRequest(id) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let fullText = '';
+        let hasThinking = false;
         let eventCount = 0;
 
         while (true) {
@@ -60,9 +61,13 @@ async function sendStreamingRequest(id) {
                         const event = JSON.parse(data);
                         eventCount++;
 
-                        // Extract text from content_block_delta events
-                        if (event.type === 'content_block_delta' && event.delta?.text) {
-                            fullText += event.delta.text;
+                        // Extract text or thinking from content_block_delta events
+                        if (event.type === 'content_block_delta') {
+                            if (event.delta?.text) {
+                                fullText += event.delta.text;
+                            } else if (event.delta?.thinking) {
+                                hasThinking = true;
+                            }
                         }
                     } catch (e) {
                         // Ignore parse errors for partial chunks
@@ -72,9 +77,16 @@ async function sendStreamingRequest(id) {
         }
 
         const totalElapsed = Date.now() - startTime;
-        const textPreview = fullText.substring(0, 50) || 'No text';
-        console.log(`[${id}] ✅ 200 after ${totalElapsed}ms (${eventCount} events): "${textPreview}..."`);
-        return { id, success: true, status: 200, elapsed: totalElapsed, eventCount };
+        const hasContent = fullText.length > 0 || hasThinking;
+
+        if (!hasContent) {
+            console.log(`[${id}] ⚠️ ${response.status} after ${totalElapsed}ms (${eventCount} events): No content received`);
+            return { id, success: false, status: response.status, elapsed: totalElapsed, eventCount };
+        }
+
+        const textPreview = fullText.substring(0, 50) || '(thinking only)';
+        console.log(`[${id}] ✅ ${response.status} after ${totalElapsed}ms (${eventCount} events): "${textPreview}..."`);
+        return { id, success: true, status: response.status, elapsed: totalElapsed, eventCount };
     } catch (error) {
         const elapsed = Date.now() - startTime;
         console.log(`[${id}] ❌ Error after ${elapsed}ms: ${error.message}`);

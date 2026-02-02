@@ -270,6 +270,11 @@ window.translations.id = {
     defaultCooldownDesc: "Cooldown bawaan jika API tidak memberikan waktu reset.",
     maxWaitThreshold: "Batas Tunggu Maksimal",
     maxWaitDesc: "Jika semua akun terkena rate limit lebih lama dari ini, langsung gagal.",
+    // Perlindungan Kuota
+    quotaProtection: "Perlindungan Kuota",
+    minimumQuotaLevel: "Level Kuota Minimum",
+    minimumQuotaLevelDesc: "Ganti akun ketika kuota turun di bawah level ini. Pengaturan per-akun lebih diutamakan.",
+    quotaDisabled: "Nonaktif",
     // Error Handling Tuning
     errorHandlingTuning: "Penyetelan Penanganan Error",
     rateLimitDedupWindow: "Jendela Deduplikasi Rate Limit",
@@ -409,4 +414,14 @@ window.translations.id = {
     strategyUpdated: "Strategi diubah ke: {strategy}",
     failedToUpdateStrategy: "Gagal memperbarui strategi",
     invalidStrategy: "Strategi tidak valid dipilih",
+    // Mode Toggle (Proxy/Paid)
+    connectionMode: "Mode Koneksi",
+    proxyMode: "Mode Proxy",
+    paidMode: "Mode Berbayar",
+    usingLocalProxy: "Menggunakan server proxy lokal (localhost:{port})",
+    usingOfficialApi: "Menggunakan API resmi Anthropic (memerlukan langganan)",
+    paidModeTitle: "Claude CLI menggunakan API resmi Anthropic",
+    paidModeDesc: "Semua konfigurasi proxy telah dihapus. Claude CLI menggunakan langganan Anthropic Anda secara langsung.",
+    paidModeHint: "Beralih ke mode Proxy untuk mengonfigurasi routing model dan preset.",
+    modeToggleFailed: "Gagal beralih mode",
 };

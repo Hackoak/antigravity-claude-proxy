@@ -5,6 +5,7 @@
  */
 
 import { ACCOUNT_CONFIG_PATH } from '../constants.js';
+import { config } from '../config.js';
 import { loadAccounts, loadDefaultAccount, saveAccounts } from './storage.js';
 import {
     isAllRateLimited as checkAllRateLimited,
@@ -33,7 +34,6 @@ import {
 } from './credentials.js';
 import { createStrategy, getStrategyLabel, DEFAULT_STRATEGY } from './strategies/index.js';
 import { logger } from '../utils/logger.js';
-import { config } from '../config.js';
 
 export class AccountManager {
     #accounts = [];
@@ -433,7 +433,10 @@ export class AccountManager {
                 modelRateLimits: a.modelRateLimits || {},
                 isInvalid: a.isInvalid || false,
                 invalidReason: a.invalidReason || null,
-                lastUsed: a.lastUsed
+                lastUsed: a.lastUsed,
+                // Include quota threshold settings
+                quotaThreshold: a.quotaThreshold,
+                modelQuotaThresholds: a.modelQuotaThresholds || {}
             }))
         };
     }

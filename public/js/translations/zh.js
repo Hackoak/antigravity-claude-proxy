@@ -237,6 +237,11 @@ window.translations.zh = {
     defaultCooldownDesc: "当 API 未提供重置时间时的备用冷却时间。",
     maxWaitThreshold: "最大等待阈值",
     maxWaitDesc: "如果所有账号的限流时间超过此阈值，立即返回错误而非等待。",
+    // 配额保护
+    quotaProtection: "配额保护",
+    minimumQuotaLevel: "最低配额水平",
+    minimumQuotaLevelDesc: "当配额低于此水平时切换账号。每个账号的单独设置优先。",
+    quotaDisabled: "已禁用",
     // 错误处理调优
     errorHandlingTuning: "错误处理调优",
     rateLimitDedupWindow: "限流去重窗口",
@@ -370,4 +375,14 @@ window.translations.zh = {
     strategyUpdated: "策略已更新为: {strategy}",
     failedToUpdateStrategy: "更新策略失败",
     invalidStrategy: "选择了无效的策略",
+    // Mode Toggle (Proxy/Paid)
+    connectionMode: "连接模式",
+    proxyMode: "代理模式",
+    paidMode: "付费模式",
+    usingLocalProxy: "使用本地代理服务器 (localhost:{port})",
+    usingOfficialApi: "使用官方 Anthropic API (需要订阅)",
+    paidModeTitle: "Claude CLI 正在使用官方 Anthropic API",
+    paidModeDesc: "所有代理配置已移除。Claude CLI 直接使用您的 Anthropic 订阅。",
+    paidModeHint: "切换到代理模式以配置模型路由和预设。",
+    modeToggleFailed: "切换模式失败",
 };

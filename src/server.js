@@ -8,7 +8,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { sendMessage, sendMessageStream, listModels, getModelQuotas, getSubscriptionTier } from './cloudcode/index.js';
+import { sendMessage, sendMessageStream, listModels, getModelQuotas, getSubscriptionTier, isValidModel } from './cloudcode/index.js';
 import { mountWebUI } from './webui/index.js';
 import { config } from './config.js';
 
@@ -172,7 +172,7 @@ function parseError(error) {
     } else if (error.message.includes('PERMISSION_DENIED')) {
         errorType = 'permission_error';
         statusCode = 403;
-        errorMessage = 'Permission denied. Check your Antigravity license.';
+        errorMessage = errorMessage;
     }
 
     return { errorType, statusCode, errorMessage };
@@ -186,10 +186,10 @@ app.use((req, res, next) => {
     res.on('finish', () => {
         const duration = Date.now() - start;
         const status = res.statusCode;
-        const logMsg = `[${req.method}] ${req.path} ${status} (${duration}ms)`;
+        const logMsg = `[${req.method}] ${req.originalUrl} ${status} (${duration}ms)`;
 
         // Skip standard logging for event logging batch unless in debug mode
-        if (req.path === '/api/event_logging/batch' || req.path === '/v1/messages/count_tokens') {
+        if (req.originalUrl === '/api/event_logging/batch' || req.originalUrl.startsWith('/v1/messages/count_tokens') || req.originalUrl.startsWith('/.well-known/')) {
             if (logger.isDebugEnabled) {
                 logger.debug(logMsg);
             }
@@ -557,6 +557,7 @@ app.get('/account-limits', async (req, res) => {
             totalAccounts: allAccounts.length,
             models: sortedModels,
             modelConfig: config.modelMapping || {},
+            globalQuotaThreshold: config.globalQuotaThreshold || 0,
             accounts: accountLimits.map(acc => {
                 // Merge quota data with account metadata
                 const metadata = accountMetadataMap.get(acc.email) || {};
@@ -572,6 +573,9 @@ app.get('/account-limits', async (req, res) => {
                     invalidReason: metadata.invalidReason || null,
                     lastUsed: metadata.lastUsed || null,
                     modelRateLimits: metadata.modelRateLimits || {},
+                    // Quota threshold settings
+                    quotaThreshold: metadata.quotaThreshold,
+                    modelQuotaThresholds: metadata.modelQuotaThresholds || {},
                     // Subscription data (new)
                     subscription: acc.subscription || metadata.subscription || { tier: 'unknown', projectId: null },
                     // Quota limits
@@ -716,6 +720,18 @@ app.post('/v1/messages', async (req, res) => {
 
         const modelId = requestedModel;
 
+        // Validate model ID before processing
+        const { account: validationAccount } = accountManager.selectAccount();
+        if (validationAccount) {
+            const token = await accountManager.getTokenForAccount(validationAccount);
+            const projectId = validationAccount.subscription?.projectId || null;
+            const valid = await isValidModel(modelId, token, projectId);
+
+            if (!valid) {
+                throw new Error(`invalid_request_error: Invalid model: ${modelId}. Use /v1/models to see available models.`);
+            }
+        }
+
         // Optimistic Retry: If ALL accounts are rate-limited for this model, reset them to force a fresh check.
         // If we have some available accounts, we try them first.
         if (accountManager.isAllRateLimited(modelId)) {
@@ -769,27 +785,59 @@ app.post('/v1/messages', async (req, res) => {
 
         if (stream) {
             // Handle streaming response
-            res.setHeader('Content-Type', 'text/event-stream');
-            res.setHeader('Cache-Control', 'no-cache');
-            res.setHeader('Connection', 'keep-alive');
-            res.setHeader('X-Accel-Buffering', 'no');
-
-            // Flush headers immediately to start the stream
-            res.flushHeaders();
+            // Do NOT flush headers immediately. We need to wait for the first chunk
+            // to ensure we don't send a 200 OK if the upstream fails immediately (e.g. 429/503).
 
             try {
-                // Use the streaming generator with account manager
-                for await (const event of sendMessageStream(request, accountManager, FALLBACK_ENABLED)) {
-                    res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
-                    // Flush after each event for real-time streaming
+                // Initialize the generator
+                const generator = sendMessageStream(request, accountManager, FALLBACK_ENABLED);
+                
+                // BUFFERING STRATEGY:
+                // Pull the first event *before* sending headers. 
+                // If this throws, we can safely send a 4xx/5xx error JSON.
+                const firstResult = await generator.next();
+
+                // If we get here, the stream started successfully.
+                res.status(200);
+                res.setHeader('Content-Type', 'text/event-stream');
+                res.setHeader('Cache-Control', 'no-cache');
+                res.setHeader('Connection', 'keep-alive');
+                res.setHeader('X-Accel-Buffering', 'no');
+                res.flushHeaders();
+
+                // If the generator isn't done, send the first chunk
+                if (!firstResult.done) {
+                    res.write(`event: ${firstResult.value.type}\ndata: ${JSON.stringify(firstResult.value)}\n\n`);
                     if (res.flush) res.flush();
                 }
+
+                // Continue with the rest of the stream
+                for await (const event of generator) {
+                    res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
+                    if (res.flush) res.flush();
+                }
+                
                 res.end();
 
-            } catch (streamError) {
-                logger.error('[API] Stream error:', streamError);
-
-                const { errorType, errorMessage } = parseError(streamError);
+            } catch (error) {
+                // If we haven't sent headers yet, we can send a proper error status
+                if (!res.headersSent) {
+                    logger.error('[API] Initial stream error:', error);
+                    const { errorType, statusCode, errorMessage } = parseError(error);
+                    
+                    return res.status(statusCode).json({
+                        type: 'error',
+                        error: {
+                            type: errorType,
+                            message: errorMessage
+                        }
+                    });
+                }
+                
+                // If headers were already sent (should only happen if error occurs mid-stream),
+                // we have to fallback to SSE error event
+                logger.error('[API] Mid-stream error:', error);
+                const { errorType, errorMessage } = parseError(error);
 
                 res.write(`event: error\ndata: ${JSON.stringify({
                     type: 'error',

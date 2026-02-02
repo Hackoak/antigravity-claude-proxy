@@ -9,9 +9,17 @@ import {
     ANTIGRAVITY_HEADERS,
     LOAD_CODE_ASSIST_ENDPOINTS,
     LOAD_CODE_ASSIST_HEADERS,
-    getModelFamily
+    getModelFamily,
+    MODEL_VALIDATION_CACHE_TTL_MS
 } from '../constants.js';
 import { logger } from '../utils/logger.js';
+
+// Model validation cache
+const modelCache = {
+    validModels: new Set(),
+    lastFetched: 0,
+    fetchPromise: null  // Prevents concurrent fetches
+};
 
 /**
  * Check if a model is supported (Claude or Gemini)
@@ -45,6 +53,10 @@ export async function listModels(token) {
         owned_by: 'anthropic',
         description: modelData.displayName || modelId
     }));
+
+    // Warm the model validation cache
+    modelCache.validModels = new Set(modelList.map(m => m.id));
+    modelCache.lastFetched = Date.now();
 
     return {
         object: 'list',
@@ -245,4 +257,72 @@ export async function getSubscriptionTier(token) {
     // Fallback: return default values if all endpoints fail
     logger.warn('[CloudCode] Failed to detect subscription tier from all endpoints. Defaulting to free.');
     return { tier: 'free', projectId: null };
+}
+
+/**
+ * Populate the model validation cache
+ * @param {string} token - OAuth access token
+ * @param {string} [projectId] - Optional project ID
+ * @returns {Promise<void>}
+ */
+async function populateModelCache(token, projectId = null) {
+    const now = Date.now();
+
+    // Check if cache is fresh
+    if (modelCache.validModels.size > 0 && (now - modelCache.lastFetched) < MODEL_VALIDATION_CACHE_TTL_MS) {
+        return;
+    }
+
+    // If already fetching, wait for it
+    if (modelCache.fetchPromise) {
+        await modelCache.fetchPromise;
+        return;
+    }
+
+    // Start fetch
+    modelCache.fetchPromise = (async () => {
+        try {
+            const data = await fetchAvailableModels(token, projectId);
+            if (data && data.models) {
+                const validIds = Object.keys(data.models).filter(modelId => isSupportedModel(modelId));
+                modelCache.validModels = new Set(validIds);
+                modelCache.lastFetched = Date.now();
+                logger.debug(`[CloudCode] Model cache populated with ${validIds.length} models`);
+            }
+        } catch (error) {
+            logger.warn(`[CloudCode] Failed to populate model cache: ${error.message}`);
+            // Don't throw - validation should degrade gracefully
+        } finally {
+            modelCache.fetchPromise = null;
+        }
+    })();
+
+    await modelCache.fetchPromise;
+}
+
+/**
+ * Check if a model ID is valid (exists in the available models list)
+ * Uses a cached model list with TTL-based refresh
+ * @param {string} modelId - Model ID to validate
+ * @param {string} token - OAuth access token for cache population
+ * @param {string} [projectId] - Optional project ID
+ * @returns {Promise<boolean>} True if model is valid
+ */
+export async function isValidModel(modelId, token, projectId = null) {
+    try {
+        // Populate cache if needed
+        await populateModelCache(token, projectId);
+
+        // If cache is populated, validate against it
+        if (modelCache.validModels.size > 0) {
+            return modelCache.validModels.has(modelId);
+        }
+
+        // Cache empty (fetch failed) - fail open, let API validate
+        return true;
+    } catch (error) {
+        logger.debug(`[CloudCode] Model validation error: ${error.message}`);
+        // Fail open - let the API validate
+        return true;
+    }
 }

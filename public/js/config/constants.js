@@ -87,7 +87,11 @@ window.AppConstants.VALIDATION = {
 
     // Capacity retries (1 - 10)
     MAX_CAPACITY_RETRIES_MIN: 1,
-    MAX_CAPACITY_RETRIES_MAX: 10
+    MAX_CAPACITY_RETRIES_MAX: 10,
+
+    // Global quota threshold (0 - 99%)
+    GLOBAL_QUOTA_THRESHOLD_MIN: 0,
+    GLOBAL_QUOTA_THRESHOLD_MAX: 99
 };
 
 /**

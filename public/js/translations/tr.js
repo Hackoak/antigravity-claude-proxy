@@ -219,6 +219,11 @@ window.translations.tr = {
     defaultCooldownDesc: "API sıfırlama zamanı sağlamadığında yedek soğuma süresi.",
     maxWaitThreshold: "Maksimum Bekleme Eşiği (Yapışkan)",
     maxWaitDesc: "Yapışkan bir hesabın değiştirmeden önce sıfırlanması için beklenecek maksimum süre.",
+    // Kota Koruması
+    quotaProtection: "Kota Koruması",
+    minimumQuotaLevel: "Minimum Kota Seviyesi",
+    minimumQuotaLevelDesc: "Kota bu seviyenin altına düştüğünde hesap değiştir. Hesap bazlı ayarlar önceliklidir.",
+    quotaDisabled: "Devre Dışı",
     // Hata İşleme Ayarları
     errorHandlingTuning: "Hata İşleme Ayarları",
     rateLimitDedupWindow: "Hız Sınırı Tekilleştirme Penceresi",
@@ -355,4 +360,14 @@ window.translations.tr = {
     strategyUpdated: "Strateji şu şekilde güncellendi: {strategy}",
     failedToUpdateStrategy: "Strateji güncellenemedi",
     invalidStrategy: "Geçersiz strateji seçildi",
+    // Mode Toggle (Proxy/Paid)
+    connectionMode: "Bağlantı Modu",
+    proxyMode: "Proxy Modu",
+    paidMode: "Ücretli Mod",
+    usingLocalProxy: "Yerel proxy sunucusu kullanılıyor (localhost:{port})",
+    usingOfficialApi: "Resmi Anthropic API kullanılıyor (abonelik gerektirir)",
+    paidModeTitle: "Claude CLI resmi Anthropic API kullanıyor",
+    paidModeDesc: "Tüm proxy yapılandırması kaldırıldı. Claude CLI doğrudan Anthropic aboneliğinizi kullanır.",
+    paidModeHint: "Model yönlendirme ve ön ayarları yapılandırmak için Proxy moduna geçin.",
+    modeToggleFailed: "Mod değiştirilemedi",
 };

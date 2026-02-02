@@ -396,6 +396,13 @@ export async function sendMessage(anthropicRequest, accountManager, fallbackEnab
                                 throw new Error(`CAPACITY_EXHAUSTED: ${errorText}`);
                             }
 
+                            // 400 errors are client errors - fail immediately, don't retry or switch accounts
+                            // Examples: token limit exceeded, invalid schema, malformed request
+                            if (response.status === 400) {
+                                logger.error(`[CloudCode] Invalid request (400): ${errorText.substring(0, 200)}`);
+                                throw new Error(`invalid_request_error: ${errorText}`);
+                            }
+
                             lastError = new Error(`API error ${response.status}: ${errorText}`);
                             // Try next endpoint for 403/404/5xx errors (matches opencode-antigravity-auth behavior)
                             if (response.status === 403 || response.status === 404) {
@@ -429,6 +436,10 @@ export async function sendMessage(anthropicRequest, accountManager, fallbackEnab
                 } catch (endpointError) {
                     if (isRateLimitError(endpointError)) {
                         throw endpointError; // Re-throw to trigger account switch
+                    }
+                    // 400 errors are client errors - re-throw immediately, don't retry
+                    if (endpointError.message?.includes('400')) {
+                        throw endpointError;
                     }
                     logger.warn(`[CloudCode] Error at ${endpoint}:`, endpointError.message);
                     lastError = endpointError;

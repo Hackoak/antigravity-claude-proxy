@@ -215,6 +215,11 @@ window.translations.pt = {
     defaultCooldownDesc: "Resfriamento de fallback quando a API não fornece tempo de reset.",
     maxWaitThreshold: "Limiar Máximo de Espera (Sticky)",
     maxWaitDesc: "Tempo máximo para aguardar uma conta sticky resetar antes de trocar.",
+    // Proteção de Cota
+    quotaProtection: "Proteção de Cota",
+    minimumQuotaLevel: "Nível Mínimo de Cota",
+    minimumQuotaLevelDesc: "Trocar de conta quando a cota cair abaixo deste nível. Configurações por conta têm prioridade.",
+    quotaDisabled: "Desativado",
     // Ajuste de Tratamento de Erros
     errorHandlingTuning: "Ajuste de Tratamento de Erros",
     rateLimitDedupWindow: "Janela de Deduplicação de Rate Limit",
@@ -305,4 +310,14 @@ window.translations.pt = {
     strategyUpdated: "Estratégia atualizada para: {strategy}",
     failedToUpdateStrategy: "Falha ao atualizar estratégia",
     invalidStrategy: "Estratégia inválida selecionada",
+    // Mode Toggle (Proxy/Paid)
+    connectionMode: "Modo de Conexão",
+    proxyMode: "Modo Proxy",
+    paidMode: "Modo Pago",
+    usingLocalProxy: "Usando servidor proxy local (localhost:{port})",
+    usingOfficialApi: "Usando API oficial da Anthropic (requer assinatura)",
+    paidModeTitle: "Claude CLI está usando a API oficial da Anthropic",
+    paidModeDesc: "Toda configuração de proxy foi removida. Claude CLI usa sua assinatura Anthropic diretamente.",
+    paidModeHint: "Mude para modo Proxy para configurar roteamento de modelos e presets.",
+    modeToggleFailed: "Falha ao alternar modo",
 };
