@@ -93,3 +93,20 @@ Re-authenticate the account:
 antigravity-claude-proxy accounts
 # Choose "Re-authenticate" for the invalid account
 ```
+
+## 403 Permission Denied
+
+If you see:
+
+```
+403 permission_error - Permission denied
+```
+
+This usually means your Google account requires phone number verification:
+
+1. Download the Antigravity app from https://antigravity.google/download
+2. Log in with the affected account(s)
+3. Complete phone number verification when prompted (or use QR code on Android)
+4. After verification, the account should work properly with the proxy
+
+> **Note:** This verification is required by Google and cannot be bypassed through the proxy.
