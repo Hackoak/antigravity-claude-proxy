@@ -336,6 +336,7 @@
                                     @input="searchTerm = $event.target.value" @focus="openDropdown()"
                                     @click.away="closeDropdown()"
                                     @keydown="onKeydown($event)"
+                                    x-ref="dropdownInput"
                                     class="input input-sm w-full font-mono text-xs !bg-space-800 !border-space-border !text-white focus:!bg-space-800 pr-8 placeholder:!text-gray-600"
                                     :class="[focusBorderClass, { '!text-gray-500': !open && !currentValue }]"
                                     :placeholder="open ? $store.global.t('typeToSearch') : ''"
@@ -347,7 +348,7 @@
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </button>
                                 <div class="absolute right-2 top-1.5 cursor-pointer text-gray-500 hover:text-white transition-colors"
-                                    @click="open ? closeDropdown() : openDropdown(); if(open) { $nextTick(() => $el.previousElementSibling?.previousElementSibling?.focus()) }"
+                                    @click="open ? closeDropdown() : openDropdown(); if(open) { $nextTick(() => $refs.dropdownInput.focus()) }"
                                     @mousedown.prevent>▼</div>
 
                                 <ul x-show="open" x-transition:enter="transition ease-out duration-100"
@@ -410,6 +411,7 @@
                                     @input="searchTerm = $event.target.value" @focus="openDropdown()"
                                     @click.away="closeDropdown()"
                                     @keydown="onKeydown($event)"
+                                    x-ref="dropdownInput"
                                     class="input input-sm w-full font-mono text-xs !bg-space-800 !border-space-border !text-white focus:!bg-space-800 pr-8 placeholder:!text-gray-600"
                                     :class="[focusBorderClass, { '!text-gray-500': !open && !currentValue }]"
                                     :placeholder="open ? $store.global.t('typeToSearch') : ''"
@@ -421,7 +423,7 @@
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </button>
                                 <div class="absolute right-2 top-1.5 cursor-pointer text-gray-500 hover:text-white transition-colors"
-                                    @click="open ? closeDropdown() : openDropdown(); if(open) { $nextTick(() => $el.previousElementSibling?.previousElementSibling?.focus()) }"
+                                    @click="open ? closeDropdown() : openDropdown(); if(open) { $nextTick(() => $refs.dropdownInput.focus()) }"
                                     @mousedown.prevent>▼</div>
 
                                 <ul x-show="open" x-transition:enter="transition ease-out duration-100"
@@ -488,9 +490,10 @@
                                     @input="searchTerm = $event.target.value" @focus="openDropdown()"
                                     @click.away="closeDropdown()"
                                     @keydown="onKeydown($event)"
+                                    x-ref="dropdownInput"
                                     class="input input-sm w-full font-mono text-xs !bg-space-800 !border-space-border !text-white focus:!bg-space-800 pr-8 placeholder:!text-gray-600"
                                     :class="[focusBorderClass, { '!text-gray-500': !open && !currentValue }]"
-                                    :placeholder="open ? $store.global.t('searchPlaceholder') : ''"
+                                    :placeholder="open ? $store.global.t('typeToSearch') : ''"
                                     :aria-label="$store.global.t(labelKey) + ' selection'">
                                 <button x-show="currentValue && !open" type="button"
                                     class="absolute right-8 top-1.5 text-gray-500 hover:text-red-400 transition-colors"
@@ -499,7 +502,7 @@
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </button>
                                 <div class="absolute right-2 top-1.5 cursor-pointer text-gray-500 hover:text-white transition-colors"
-                                    @click="open ? closeDropdown() : openDropdown(); if(open) { $nextTick(() => $el.previousElementSibling?.previousElementSibling?.focus()) }"
+                                    @click="open ? closeDropdown() : openDropdown(); if(open) { $nextTick(() => $refs.dropdownInput.focus()) }"
                                     @mousedown.prevent>▼</div>
                                 <ul x-show="open" x-transition:enter="transition ease-out duration-100"
                                     x-transition:enter-start="opacity-0 scale-95"
@@ -557,9 +560,10 @@
                                     @input="searchTerm = $event.target.value" @focus="openDropdown()"
                                     @click.away="closeDropdown()"
                                     @keydown="onKeydown($event)"
+                                    x-ref="dropdownInput"
                                     class="input input-sm w-full font-mono text-xs !bg-space-800 !border-space-border !text-white focus:!bg-space-800 pr-8 placeholder:!text-gray-600"
                                     :class="[focusBorderClass, { '!text-gray-500': !open && !currentValue }]"
-                                    :placeholder="open ? $store.global.t('searchPlaceholder') : ''"
+                                    :placeholder="open ? $store.global.t('typeToSearch') : ''"
                                     :aria-label="$store.global.t(labelKey) + ' selection'">
                                 <button x-show="currentValue && !open" type="button"
                                     class="absolute right-8 top-1.5 text-gray-500 hover:text-red-400 transition-colors"
@@ -568,7 +572,7 @@
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </button>
                                 <div class="absolute right-2 top-1.5 cursor-pointer text-gray-500 hover:text-white transition-colors"
-                                    @click="open ? closeDropdown() : openDropdown(); if(open) { $nextTick(() => $el.previousElementSibling?.previousElementSibling?.focus()) }"
+                                    @click="open ? closeDropdown() : openDropdown(); if(open) { $nextTick(() => $refs.dropdownInput.focus()) }"
                                     @mousedown.prevent>▼</div>
                                 <ul x-show="open" x-transition:enter="transition ease-out duration-100"
                                     x-transition:enter-start="opacity-0 scale-95"
@@ -626,9 +630,10 @@
                                     @input="searchTerm = $event.target.value" @focus="openDropdown()"
                                     @click.away="closeDropdown()"
                                     @keydown="onKeydown($event)"
+                                    x-ref="dropdownInput"
                                     class="input input-sm w-full font-mono text-xs !bg-space-800 !border-space-border !text-white focus:!bg-space-800 pr-8 placeholder:!text-gray-600"
                                     :class="[focusBorderClass, { '!text-gray-500': !open && !currentValue }]"
-                                    :placeholder="open ? $store.global.t('searchPlaceholder') : ''"
+                                    :placeholder="open ? $store.global.t('typeToSearch') : ''"
                                     :aria-label="$store.global.t(labelKey) + ' selection'">
                                 <button x-show="currentValue && !open" type="button"
                                     class="absolute right-8 top-1.5 text-gray-500 hover:text-red-400 transition-colors"
@@ -637,7 +642,7 @@
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </button>
                                 <div class="absolute right-2 top-1.5 cursor-pointer text-gray-500 hover:text-white transition-colors"
-                                    @click="open ? closeDropdown() : openDropdown(); if(open) { $nextTick(() => $el.previousElementSibling?.previousElementSibling?.focus()) }"
+                                    @click="open ? closeDropdown() : openDropdown(); if(open) { $nextTick(() => $refs.dropdownInput.focus()) }"
                                     @mousedown.prevent>▼</div>
                                 <ul x-show="open" x-transition:enter="transition ease-out duration-100"
                                     x-transition:enter-start="opacity-0 scale-95"
