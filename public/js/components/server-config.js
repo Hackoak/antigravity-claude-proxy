@@ -38,6 +38,31 @@ window.Components.serverConfig = () => ({
         }
     },
 
+    async reloadAccounts() {
+        const store = Alpine.store('global');
+        this.loading = true;
+        try {
+            const { response, newPassword } = await window.utils.request(
+                '/api/accounts/reload',
+                { method: 'POST' },
+                store.webuiPassword
+            );
+            if (newPassword) store.webuiPassword = newPassword;
+
+            const data = await response.json();
+            if (data.status === 'ok') {
+                store.showToast(store.t('accountsReloaded'), 'success');
+                if (Alpine.store('data')) Alpine.store('data').fetchData();
+            } else {
+                throw new Error(data.error || store.t('reloadFailed'));
+            }
+        } catch (e) {
+            store.showToast(store.t('reloadFailed') + ': ' + e.message, 'error');
+        } finally {
+            this.loading = false;
+        }
+    },
+
 
 
     // Password management

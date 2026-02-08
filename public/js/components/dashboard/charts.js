@@ -26,7 +26,7 @@ const getThemeColor = (name) => window.utils.getThemeColor(name);
 // Color palette for different families and models
 const FAMILY_COLORS = {
   get claude() {
-    return getThemeColor("--color-neon-purple");
+    return getThemeColor("--color-primary");
   },
   get gemini() {
     return getThemeColor("--color-neon-green");
@@ -214,7 +214,7 @@ window.DashboardCharts.updateCharts = function (component) {
     : 0;
 
   const familyColors = {
-    claude: getThemeColor("--color-neon-purple") || "#a855f7",
+    claude: getThemeColor("--color-primary") || "#da7756",
     gemini: getThemeColor("--color-neon-green") || "#22c55e",
     unknown: getThemeColor("--color-neon-cyan") || "#06b6d4",
   };

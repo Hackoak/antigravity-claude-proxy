@@ -8,7 +8,7 @@ document.addEventListener('alpine:init', () => {
         init() {
             // Hash-based routing
             const validTabs = ['dashboard', 'models', 'accounts', 'logs', 'settings'];
-            const validSettingsTabs = ['ui', 'claude', 'models', 'server'];
+            const validSettingsTabs = ['interface', 'claude', 'models', 'server'];
             const getHash = () => window.location.hash.substring(1);
 
             const parseHash = (hash) => {
@@ -29,7 +29,7 @@ document.addEventListener('alpine:init', () => {
             Alpine.effect(() => {
                 if (!validTabs.includes(this.activeTab)) return;
                 let target = this.activeTab;
-                if (this.activeTab === 'settings' && this.settingsTab !== 'ui') {
+                if (this.activeTab === 'settings' && this.settingsTab !== 'interface') {
                     target = `settings/${this.settingsTab}`;
                 }
                 if (getHash() !== target) {
@@ -45,7 +45,7 @@ document.addEventListener('alpine:init', () => {
                         this.activeTab = tab;
                     }
                     if (tab === 'settings') {
-                        this.settingsTab = validSettingsTabs.includes(subtab) ? subtab : 'ui';
+                        this.settingsTab = validSettingsTabs.includes(subtab) ? subtab : 'interface';
                     }
                 }
             });
@@ -75,7 +75,7 @@ document.addEventListener('alpine:init', () => {
         // App State
         version: '1.0.0',
         activeTab: 'dashboard',
-        settingsTab: 'ui',
+        settingsTab: 'interface',
         webuiPassword: localStorage.getItem('antigravity_webui_password') || '',
 
         // i18n
