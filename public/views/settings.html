@@ -1111,7 +1111,8 @@
                         <button class="btn btn-sm btn-ghost text-neon-purple hover:bg-neon-purple/10"
                             @click="loadServerPreset(selectedServerPreset)"
                             :disabled="!selectedServerPreset || loadingPreset || editingPresetConfig"
-                            :title="$store.global.t('loadServerPreset') || 'Load preset'">
+                            :title="$store.global.t('loadServerPreset') || 'Load preset'"
+                            :aria-label="$store.global.t('loadServerPreset') || 'Load preset'">
                             <span x-show="!loadingPreset">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -1122,7 +1123,8 @@
                         <button class="btn btn-sm btn-ghost text-neon-purple hover:bg-neon-purple/10"
                             @click="editServerPreset()"
                             :disabled="!selectedServerPreset || isSelectedPresetBuiltIn() || editingPresetConfig"
-                            :title="$store.global.t('editPreset') || 'Edit preset'">
+                            :title="$store.global.t('editPreset') || 'Edit preset'"
+                            :aria-label="$store.global.t('editPreset') || 'Edit preset'">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
@@ -1130,7 +1132,8 @@
                         <button class="btn btn-sm btn-ghost text-red-400 hover:bg-red-500/10"
                             @click="deleteSelectedServerPreset()"
                             :disabled="!selectedServerPreset || isSelectedPresetBuiltIn() || deletingServerPreset || editingPresetConfig"
-                            :title="isSelectedPresetBuiltIn() ? ($store.global.t('cannotDeleteBuiltIn') || 'Cannot delete built-in presets') : ($store.global.t('deletePreset') || 'Delete preset')">
+                            :title="isSelectedPresetBuiltIn() ? ($store.global.t('cannotDeleteBuiltIn') || 'Cannot delete built-in presets') : ($store.global.t('deletePreset') || 'Delete preset')"
+                            :aria-label="isSelectedPresetBuiltIn() ? ($store.global.t('cannotDeleteBuiltIn') || 'Cannot delete built-in presets') : ($store.global.t('deletePreset') || 'Delete preset')">
                             <span x-show="!deletingServerPreset">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
