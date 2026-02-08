@@ -959,11 +959,14 @@ export function mountWebUI(app, dirname, accountManager) {
             }
 
             const { name: newName, description, config: configInput } = req.body;
+            if (typeof newName === 'string' && !newName.trim()) {
+                return res.status(400).json({ status: 'error', error: 'Preset name is required' });
+            }
             if (typeof newName === 'string' && newName.trim().length > 50) {
                 return res.status(400).json({ status: 'error', error: 'Preset name must be 50 characters or fewer' });
             }
             const updates = {};
-            if (newName !== undefined) updates.name = newName;
+            if (newName !== undefined) updates.name = newName.trim();
             if (description !== undefined) updates.description = description;
 
             // Validate and include config updates if provided
