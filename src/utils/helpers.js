@@ -70,3 +70,13 @@ export function isNetworkError(error) {
         msg.includes('timeout')
     );
 }
+
+/**
+ * Generate random jitter for backoff timing (Thundering Herd Prevention)
+ * Prevents all clients from retrying at the exact same moment after errors.
+ * @param {number} maxJitterMs - Maximum jitter range (result will be ±maxJitterMs/2)
+ * @returns {number} Random jitter value between -maxJitterMs/2 and +maxJitterMs/2
+ */
+export function generateJitter(maxJitterMs) {
+    return Math.random() * maxJitterMs - (maxJitterMs / 2);
+}

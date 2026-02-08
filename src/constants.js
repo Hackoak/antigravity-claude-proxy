@@ -33,7 +33,7 @@ function getAntigravityDbPath() {
 function getPlatformUserAgent() {
     const os = platform();
     const architecture = arch();
-    return `antigravity/1.15.8 ${os}/${architecture}`;
+    return `antigravity/1.16.5 ${os}/${architecture}`;
 }
 
 // Cloud Code API endpoints (in fallback order)
@@ -130,6 +130,10 @@ export const QUOTA_EXHAUSTED_BACKOFF_TIERS_MS = [60000, 300000, 1800000, 7200000
 
 // Minimum backoff floor to prevent "Available in 0s" loops (matches opencode-antigravity-auth)
 export const MIN_BACKOFF_MS = 2000;
+
+// Jitter range for capacity backoff (Thundering Herd Prevention)
+// Applied to MODEL_CAPACITY_EXHAUSTED to stagger client retries
+export const CAPACITY_JITTER_MAX_MS = 10000; // ±5s jitter range
 
 // Thinking model constants
 export const MIN_SIGNATURE_LENGTH = 50; // Minimum valid thinking signature length
@@ -294,6 +298,7 @@ export default {
     BACKOFF_BY_ERROR_TYPE,
     QUOTA_EXHAUSTED_BACKOFF_TIERS_MS,
     MIN_BACKOFF_MS,
+    CAPACITY_JITTER_MAX_MS,
     MIN_SIGNATURE_LENGTH,
     GEMINI_MAX_OUTPUT_TOKENS,
     GEMINI_SKIP_SIGNATURE,
