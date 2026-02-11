@@ -10,6 +10,7 @@ const path = require('path');
 
 const tests = [
     { name: 'Account Selection Strategies', file: 'test-strategies.cjs' },
+    { name: 'Fingerprint Management', file: 'test-fingerprint.cjs' },
     { name: 'Cache Control Stripping', file: 'test-cache-control.cjs' },
     { name: 'Thinking Signatures', file: 'test-thinking-signatures.cjs' },
     { name: 'Multi-turn Tools (Non-Streaming)', file: 'test-multiturn-thinking-tools.cjs' },
@@ -21,7 +22,9 @@ const tests = [
     { name: 'OAuth No-Browser Mode', file: 'test-oauth-no-browser.cjs' },
     { name: 'Empty Response Retry', file: 'test-empty-response-retry.cjs' },
     { name: 'Schema Sanitizer', file: 'test-schema-sanitizer.cjs' },
-    { name: 'Streaming Whitespace', file: 'test-streaming-whitespace.cjs' }
+    { name: 'Streaming Whitespace', file: 'test-streaming-whitespace.cjs' },
+    { name: '403 Account Rotation (Unit)', file: 'test-403-account-rotation.cjs' },
+    { name: '403 Account Rotation (Integration)', file: 'test-403-integration.cjs' }
 ];
 
 async function runTest(test) {
@@ -89,7 +92,6 @@ async function main() {
     let allPassed = true;
     for (const result of results) {
         const status = result.passed ? '✓ PASS' : '✗ FAIL';
-        const statusColor = result.passed ? '' : '';
         console.log(`║ ${status.padEnd(8)} ${result.name.padEnd(50)} ║`);
         if (!result.passed) allPassed = false;
     }

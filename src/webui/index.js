@@ -292,6 +292,15 @@ export function mountWebUI(app, dirname, accountManager) {
             const { email } = req.params;
             accountManager.clearTokenCache(email);
             accountManager.clearProjectCache(email);
+
+            // For verification errors (403 VALIDATION_REQUIRED), clear isInvalid on refresh.
+            // The user has completed verification on Google's site and clicks Refresh to re-enable.
+            // Auth errors (no verifyUrl) still require OAuth re-auth via FIX button.
+            const account = accountManager.getAllAccounts().find(a => a.email === email);
+            if (account && account.isInvalid && account.verifyUrl) {
+                accountManager.clearInvalid(email);
+            }
+
             res.json({
                 status: 'ok',
                 message: `Token cache cleared for ${email}`
@@ -341,6 +350,78 @@ export function mountWebUI(app, dirname, accountManager) {
             res.json({
                 status: 'ok',
                 message: `Account ${email} removed`
+            });
+        } catch (error) {
+            res.status(500).json({ status: 'error', error: error.message });
+        }
+    });
+
+    /**
+     * POST /api/accounts/:email/fingerprint/regenerate - Regenerate fingerprint
+     */
+    app.post('/api/accounts/:email/fingerprint/regenerate', async (req, res) => {
+        try {
+            const { email } = req.params;
+            const fingerprint = accountManager.regenerateFingerprint(email);
+
+            if (!fingerprint) {
+                return res.status(404).json({ status: 'error', error: 'Account not found' });
+            }
+
+            res.json({
+                status: 'ok',
+                message: 'Fingerprint regenerated',
+                fingerprint
+            });
+        } catch (error) {
+            res.status(500).json({ status: 'error', error: error.message });
+        }
+    });
+
+    /**
+     * GET /api/accounts/:email/fingerprint - Get fingerprint details and history
+     */
+    app.get('/api/accounts/:email/fingerprint', async (req, res) => {
+        try {
+            const { email } = req.params;
+            const account = accountManager.getAllAccounts().find(a => a.email === email);
+
+            if (!account) {
+                return res.status(404).json({ status: 'error', error: 'Account not found' });
+            }
+
+            res.json({
+                status: 'ok',
+                fingerprint: account.fingerprint,
+                history: account.fingerprintHistory || []
+            });
+        } catch (error) {
+            res.status(500).json({ status: 'error', error: error.message });
+        }
+    });
+
+    /**
+     * POST /api/accounts/:email/fingerprint/restore - Restore fingerprint from history
+     */
+    app.post('/api/accounts/:email/fingerprint/restore', async (req, res) => {
+        try {
+            const { email } = req.params;
+            const { index } = req.body;
+
+            if (typeof index !== 'number') {
+                return res.status(400).json({ status: 'error', error: 'History index required' });
+            }
+
+            const fingerprint = accountManager.restoreFingerprint(email, index);
+
+            if (!fingerprint) {
+                return res.status(404).json({ status: 'error', error: 'Account or history entry not found' });
+            }
+
+            res.json({
+                status: 'ok',
+                message: 'Fingerprint restored',
+                fingerprint
             });
         } catch (error) {
             res.status(500).json({ status: 'error', error: error.message });
@@ -572,7 +653,7 @@ export function mountWebUI(app, dirname, accountManager) {
      */
     app.post('/api/config', async (req, res) => {
         try {
-            const { debug, devMode, logLevel, persistTokenCache } = req.body;
+            const { debug, devMode, logLevel, persistTokenCache, requestThrottlingEnabled, requestDelayMs } = req.body;
 
             // Validate tunable config fields via shared helper
             const updates = validateConfigFields(req.body);
@@ -592,6 +673,12 @@ export function mountWebUI(app, dirname, accountManager) {
             }
             if (typeof persistTokenCache === 'boolean') {
                 updates.persistTokenCache = persistTokenCache;
+            }
+            if (typeof requestThrottlingEnabled === 'boolean') {
+                updates.requestThrottlingEnabled = requestThrottlingEnabled;
+            }
+            if (typeof requestDelayMs === 'number' && requestDelayMs >= 100 && requestDelayMs <= 5000) {
+                updates.requestDelayMs = requestDelayMs;
             }
 
             if (Object.keys(updates).length === 0) {
