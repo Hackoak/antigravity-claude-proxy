@@ -12,6 +12,9 @@ export default {
       },
       colors: {
         primary: '#da7756',
+        white: '#DEDEDE',
+        heading: '#DEDEDE',
+        description: '#9E9E9E',
         // Vercel-inspired Dark Theme
         space: {
           950: '#000000', // Pure Black
