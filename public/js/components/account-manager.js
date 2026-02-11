@@ -118,6 +118,15 @@ window.Components.accountManager = () => ({
 
     async fixAccount(email) {
         const store = Alpine.store('global');
+        const dataStore = Alpine.store('data');
+        // If the account has a verification URL (403 VALIDATION_REQUIRED), open it directly
+        const account = (dataStore.accounts || []).find(a => a.email === email);
+        if (account?.verifyUrl) {
+            window.open(account.verifyUrl, '_blank');
+            store.showToast(store.t('verifyThenRefresh') || 'After completing verification, click the ↻ Refresh button to re-enable this account', 'info', 10000);
+            return;
+        }
+        // Otherwise fall back to OAuth re-auth
         store.showToast(store.t('reauthenticating', { email: Redact.email(email) }), 'info');
         const password = store.webuiPassword;
         try {
@@ -201,6 +210,127 @@ window.Components.accountManager = () => ({
         addingModel: false,
         newModelId: '',
         newModelThreshold: 10
+    },
+
+    // Fingerprint Modal
+    fingerprintModal: {
+        email: '',
+        current: null,
+        history: [],
+        loading: false,
+        regenerating: false,
+        restoring: false
+    },
+
+    async openFingerprintModal(account) {
+        const store = Alpine.store('global');
+        this.fingerprintModal = {
+            email: account.email,
+            current: null,
+            history: [],
+            loading: true,
+            regenerating: false,
+            restoring: false
+        };
+
+        document.getElementById('fingerprint_modal').showModal();
+
+        try {
+            const { response, newPassword } = await window.utils.request(
+                `/api/accounts/${encodeURIComponent(account.email)}/fingerprint`,
+                {},
+                store.webuiPassword
+            );
+            if (newPassword) store.webuiPassword = newPassword;
+
+            const data = await response.json();
+            if (data.status === 'ok') {
+                this.fingerprintModal.current = data.fingerprint;
+                this.fingerprintModal.history = data.history;
+            } else {
+                store.showToast(data.error || 'Failed to fetch fingerprint', 'error');
+            }
+        } catch (e) {
+            store.showToast('Error fetching fingerprint: ' + e.message, 'error');
+        } finally {
+            this.fingerprintModal.loading = false;
+        }
+    },
+
+    async regenerateFingerprint() {
+        const store = Alpine.store('global');
+        const email = this.fingerprintModal.email;
+        this.fingerprintModal.regenerating = true;
+
+        try {
+            const { response, newPassword } = await window.utils.request(
+                `/api/accounts/${encodeURIComponent(email)}/fingerprint/regenerate`,
+                { method: 'POST' },
+                store.webuiPassword
+            );
+            if (newPassword) store.webuiPassword = newPassword;
+
+            const data = await response.json();
+            if (data.status === 'ok') {
+                store.showToast('Fingerprint regenerated', 'success');
+                // Refresh modal data
+                this.fingerprintModal.current = data.fingerprint;
+                // Fetch history again to show the old one moved to history
+                await this.refreshFingerprintData(email);
+            } else {
+                throw new Error(data.error || 'Failed to regenerate');
+            }
+        } catch (e) {
+            store.showToast('Regeneration failed: ' + e.message, 'error');
+        } finally {
+            this.fingerprintModal.regenerating = false;
+        }
+    },
+
+    async restoreFingerprint(index) {
+        const store = Alpine.store('global');
+        const email = this.fingerprintModal.email;
+        this.fingerprintModal.restoring = true;
+
+        try {
+            const { response, newPassword } = await window.utils.request(
+                `/api/accounts/${encodeURIComponent(email)}/fingerprint/restore`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ index })
+                },
+                store.webuiPassword
+            );
+            if (newPassword) store.webuiPassword = newPassword;
+
+            const data = await response.json();
+            if (data.status === 'ok') {
+                store.showToast('Fingerprint restored', 'success');
+                this.fingerprintModal.current = data.fingerprint;
+                await this.refreshFingerprintData(email);
+            } else {
+                throw new Error(data.error || 'Failed to restore');
+            }
+        } catch (e) {
+            store.showToast('Restore failed: ' + e.message, 'error');
+        } finally {
+            this.fingerprintModal.restoring = false;
+        }
+    },
+
+    async refreshFingerprintData(email) {
+        const store = Alpine.store('global');
+        const { response, newPassword } = await window.utils.request(
+            `/api/accounts/${encodeURIComponent(email)}/fingerprint`,
+            {},
+            store.webuiPassword
+        );
+        if (newPassword) store.webuiPassword = newPassword;
+        const data = await response.json();
+        if (data.status === 'ok') {
+            this.fingerprintModal.history = data.history;
+        }
     },
 
     openThresholdModal(account) {
