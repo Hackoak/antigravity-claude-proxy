@@ -27,11 +27,14 @@ window.DashboardFilters.getInitialState = function() {
     return {
         timeRange: '24h',  // '1h', '6h', '24h', '7d', 'all'
         displayMode: 'model',
+        analysisMode: 'volume', // 'volume', 'success', 'latency'
+        showComparison: true,
         selectedFamilies: [],
         selectedModels: {},
         showModelFilter: false,
         showTimeRangeDropdown: false,
-        showDisplayModeDropdown: false
+        showDisplayModeDropdown: false,
+        showAnalysisModeDropdown: false
     };
 };
 
@@ -46,6 +49,8 @@ window.DashboardFilters.loadPreferences = function(component) {
             const prefs = JSON.parse(saved);
             component.timeRange = prefs.timeRange || '24h';
             component.displayMode = prefs.displayMode || 'model';
+            component.analysisMode = prefs.analysisMode || 'volume';
+            component.showComparison = prefs.showComparison !== undefined ? prefs.showComparison : true;
             component.selectedFamilies = prefs.selectedFamilies || [];
             component.selectedModels = prefs.selectedModels || {};
         }
@@ -63,6 +68,8 @@ window.DashboardFilters.savePreferences = function(component) {
         localStorage.setItem('dashboard_chart_prefs', JSON.stringify({
             timeRange: component.timeRange,
             displayMode: component.displayMode,
+            analysisMode: component.analysisMode,
+            showComparison: component.showComparison,
             selectedFamilies: component.selectedFamilies,
             selectedModels: component.selectedModels
         }));
@@ -97,6 +104,28 @@ window.DashboardFilters.setTimeRange = function(component, range) {
 };
 
 /**
+ * Set analysis mode (volume, success, latency)
+ * @param {object} component - Dashboard component instance
+ * @param {string} mode - 'volume', 'success', 'latency'
+ */
+window.DashboardFilters.setAnalysisMode = function(component, mode) {
+    component.analysisMode = mode;
+    component.showAnalysisModeDropdown = false;
+    window.DashboardFilters.savePreferences(component);
+    component.updateTrendChart();
+};
+
+/**
+ * Toggle comparison mode
+ * @param {object} component - Dashboard component instance
+ */
+window.DashboardFilters.toggleComparison = function(component) {
+    component.showComparison = !component.showComparison;
+    window.DashboardFilters.savePreferences(component);
+    component.updateTrendChart();
+};
+
+/**
  * Get time range cutoff timestamp
  * @param {string} range - Time range code
  * @returns {number|null} Cutoff timestamp or null for 'all'
@@ -113,25 +142,48 @@ window.DashboardFilters.getTimeRangeCutoff = function(range) {
 };
 
 /**
- * Get filtered history data based on time range
+ * Get the duration of the time range in milliseconds
+ * @param {string} range - Time range code
+ * @returns {number} Duration in ms
+ */
+window.DashboardFilters.getTimeRangeDuration = function(range) {
+    switch (range) {
+        case '1h': return 1 * 60 * 60 * 1000;
+        case '6h': return 6 * 60 * 60 * 1000;
+        case '24h': return 24 * 60 * 60 * 1000;
+        case '7d': return 7 * 24 * 60 * 60 * 1000;
+        default: return 0;
+    }
+};
+
+/**
+ * Get filtered history data based on time range, split into current and previous periods
  * @param {object} component - Dashboard component instance
- * @returns {object} Filtered history data
+ * @returns {object} { current: {}, previous: {} }
  */
 window.DashboardFilters.getFilteredHistoryData = function(component) {
     const history = component.historyData;
-    if (!history || Object.keys(history).length === 0) return {};
+    if (!history || Object.keys(history).length === 0) return { current: {}, previous: {} };
 
     const cutoff = window.DashboardFilters.getTimeRangeCutoff(component.timeRange);
-    if (!cutoff) return history; // 'all' - return everything
+    if (!cutoff) return { current: history, previous: {} }; // 'all' - no comparison
 
-    const filtered = {};
+    const duration = window.DashboardFilters.getTimeRangeDuration(component.timeRange);
+    const previousCutoff = cutoff - duration;
+
+    const current = {};
+    const previous = {};
+
     Object.entries(history).forEach(([iso, data]) => {
         const timestamp = new Date(iso).getTime();
         if (timestamp >= cutoff) {
-            filtered[iso] = data;
+            current[iso] = data;
+        } else if (component.showComparison && timestamp >= previousCutoff) {
+            previous[iso] = data;
         }
     });
-    return filtered;
+
+    return { current, previous };
 };
 
 /**

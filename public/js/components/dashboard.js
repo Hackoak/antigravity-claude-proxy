@@ -11,6 +11,7 @@ window.Components.dashboard = () => ({
     hasFilteredTrendData: true,
     charts: { quotaDistribution: null, usageTrend: null },
     usageStats: { total: 0, today: 0, thisHour: 0 },
+    analysisStats: { current: 0, previous: 0, change: 0 },
     historyData: {},
     modelTree: {},
     families: [],
@@ -200,6 +201,24 @@ window.Components.dashboard = () => ({
 
     getTimeRangeLabel() {
         return window.DashboardFilters.getTimeRangeLabel(this);
+    },
+
+    setAnalysisMode(mode) {
+        window.DashboardFilters.setAnalysisMode(this, mode);
+    },
+
+    toggleComparison() {
+        window.DashboardFilters.toggleComparison(this);
+    },
+
+    getAnalysisModeLabel() {
+        const store = Alpine.store('global');
+        switch (this.analysisMode) {
+            case 'volume': return store.t('requestVolume');
+            case 'success': return store.t('successRate');
+            case 'latency': return store.t('avgLatency');
+            default: return '';
+        }
     },
 
     toggleFamily(family) {

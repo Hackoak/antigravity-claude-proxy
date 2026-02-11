@@ -134,13 +134,13 @@
                     </svg>
                     <span x-show="sidebarOpen">Logs</span>
                 </button>
-            </nav>
+            <!-- </nav> -->
 
-            <div class="px-3 mt-8 mb-2" x-show="sidebarOpen">
+            <div class="py-3 mt-8 mb-2" x-show="sidebarOpen">
                 <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3">Configuration</span>
             </div>
 
-            <nav class="p-3 space-y-1">
+            <!-- <nav class="p-3 space-y-1"> -->
                 <!-- Accounts -->
                 <button @click="$store.global.activeTab = 'accounts'"
                     :class="$store.global.activeTab === 'accounts' ? 'bg-[#D4A27F1A] text-white' : 'text-gray-400 hover:text-gray-200 hover:bg-space-900'"

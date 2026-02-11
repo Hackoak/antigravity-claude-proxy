@@ -86,14 +86,15 @@ function isCanvasReady(canvas) {
  * @param {Array} data - Data points
  * @param {string} color - Line color
  * @param {HTMLCanvasElement} canvas - Canvas element
+ * @param {boolean} isComparison - Whether this is a comparison dataset
  * @returns {object} Chart.js dataset configuration
  */
-window.DashboardCharts.createDataset = function (label, data, color, canvas) {
+window.DashboardCharts.createDataset = function (label, data, color, canvas, isComparison = false) {
   let gradient;
 
   try {
     // Safely create gradient with fallback
-    if (canvas && canvas.getContext) {
+    if (canvas && canvas.getContext && !isComparison) {
       const ctx = canvas.getContext("2d");
       if (ctx && ctx.createLinearGradient) {
         gradient = ctx.createLinearGradient(0, 0, 0, 200);
@@ -111,18 +112,20 @@ window.DashboardCharts.createDataset = function (label, data, color, canvas) {
   }
 
   // Fallback to solid color if gradient creation failed
-  const backgroundColor =
-    gradient || window.DashboardCharts.hexToRgba(color, 0.08);
+  const backgroundColor = isComparison 
+    ? "rgba(0, 0, 0, 0)" 
+    : (gradient || window.DashboardCharts.hexToRgba(color, 0.08));
 
   return {
     label,
     data,
-    borderColor: color,
+    borderColor: isComparison ? window.DashboardCharts.hexToRgba(color, 0.4) : color,
     backgroundColor: backgroundColor,
-    borderWidth: 2.5,
+    borderWidth: isComparison ? 1.5 : 2.5,
+    borderDash: isComparison ? [5, 5] : [],
     tension: 0.35,
-    fill: true,
-    pointRadius: 2.5,
+    fill: !isComparison,
+    pointRadius: isComparison ? 0 : 2.5,
     pointHoverRadius: 6,
     pointBackgroundColor: color,
     pointBorderColor: "rgba(9, 9, 11, 0.8)",
@@ -359,53 +362,22 @@ window.DashboardCharts.updateTrendChart = function (component) {
   }
 
   // Safety checks
-  if (!canvas) {
-    if (window.UILogger) window.UILogger.debug("[updateTrendChart] Canvas not found in DOM");
-    _trendChartUpdateLock = false;
-    return;
-  }
-  if (typeof Chart === "undefined") {
-    if (window.UILogger) window.UILogger.warn("[updateTrendChart] Chart.js not loaded");
+  if (!canvas || typeof Chart === "undefined" || !isCanvasReady(canvas)) {
     _trendChartUpdateLock = false;
     return;
   }
 
-  if (window.UILogger) window.UILogger.debug("[updateTrendChart] Canvas element:", {
-    exists: !!canvas,
-    isConnected: canvas.isConnected,
-    width: canvas.offsetWidth,
-    height: canvas.offsetHeight,
-    parentElement: canvas.parentElement?.tagName,
-  });
-
-  if (!isCanvasReady(canvas)) {
-    if (window.UILogger) window.UILogger.debug("[updateTrendChart] Canvas not ready", {
-      isConnected: canvas.isConnected,
-      width: canvas.offsetWidth,
-      height: canvas.offsetHeight,
-    });
-    _trendChartUpdateLock = false;
-    return;
-  }
-
-  // Clear canvas to ensure clean state after destroy
+  // Clear canvas
   try {
     const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-  } catch (e) {
-    if (window.UILogger) window.UILogger.debug("[updateTrendChart] Failed to clear canvas:", e.message);
-  }
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+  } catch (e) { }
 
-  if (window.UILogger) window.UILogger.debug(
-    "[updateTrendChart] Canvas is ready, proceeding with chart creation"
-  );
-
-  // Use filtered history data based on time range
-  const history = window.DashboardFilters.getFilteredHistoryData(component);
-  if (!history || Object.keys(history).length === 0) {
-    if (window.UILogger) window.UILogger.debug("No history data available for trend chart (after filtering)");
+  // Use filtered history data (returns { current, previous })
+  const { current, previous } = window.DashboardFilters.getFilteredHistoryData(component);
+  const hasCurrent = current && Object.keys(current).length > 0;
+  
+  if (!hasCurrent) {
     component.hasFilteredTrendData = false;
     _trendChartUpdateLock = false;
     return;
@@ -413,130 +385,144 @@ window.DashboardCharts.updateTrendChart = function (component) {
 
   component.hasFilteredTrendData = true;
 
-  // Sort entries by timestamp for correct order
-  const sortedEntries = Object.entries(history).sort(
-    ([a], [b]) => new Date(a).getTime() - new Date(b).getTime()
-  );
+  // Sort entries for correct order
+  const currentEntries = Object.entries(current).sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime());
+  const previousEntries = Object.entries(previous).sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime());
 
-  // Determine if data spans multiple days (for smart label formatting)
-  const timestamps = sortedEntries.map(([iso]) => new Date(iso));
-  const isMultiDay = timestamps.length > 1 &&
-    timestamps[0].toDateString() !== timestamps[timestamps.length - 1].toDateString();
+  // Helper to get metric value based on analysisMode
+  const getMetricValue = (data, family, model = null) => {
+    const familyData = data[family];
+    if (!familyData) return 0;
 
-  // Helper to format X-axis labels based on time range and multi-day status
-  const formatLabel = (date) => {
-    const timeRange = component.timeRange || '24h';
-
-    if (timeRange === '7d') {
-      // Week view: show MM/DD
-      return date.toLocaleDateString([], { month: '2-digit', day: '2-digit' });
-    } else if (isMultiDay || timeRange === 'all') {
-      // Multi-day data: show MM/DD HH:MM
-      return date.toLocaleDateString([], { month: '2-digit', day: '2-digit' }) + ' ' +
-             date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else {
-      // Same day: show HH:MM only
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (component.analysisMode === 'volume') {
+      if (model) {
+        const m = familyData[model];
+        return typeof m === 'object' ? m.count : (m || 0);
+      }
+      return familyData._subtotal || 0;
+    } 
+    
+    if (component.analysisMode === 'success') {
+      if (model) {
+        const m = familyData[model];
+        if (typeof m !== 'object') return 100; // Legacy data assumed success
+        return m.count > 0 ? Math.round((m.success / m.count) * 100) : 100;
+      }
+      const total = familyData._subtotal || 0;
+      return total > 0 ? Math.round(((familyData._success || total) / total) * 100) : 100;
     }
+
+    if (component.analysisMode === 'latency') {
+      if (model) {
+        const m = familyData[model];
+        if (typeof m !== 'object') return 0;
+        return m.count > 0 ? Math.round(m.latency / m.count) : 0;
+      }
+      const total = familyData._subtotal || 0;
+      return total > 0 ? Math.round((familyData._latency || 0) / total) : 0;
+    }
+
+    return 0;
   };
 
+  // Build labels and current datasets
   const labels = [];
   const datasets = [];
 
+  // Determine if data spans multiple days
+  const timestamps = currentEntries.map(([iso]) => new Date(iso));
+  const isMultiDay = timestamps.length > 1 && timestamps[0].toDateString() !== timestamps[timestamps.length - 1].toDateString();
+
+  const formatLabel = (date) => {
+    const timeRange = component.timeRange;
+    if (timeRange === '7d') return date.toLocaleDateString([], { month: '2-digit', day: '2-digit' });
+    if (isMultiDay || timeRange === 'all') return date.toLocaleDateString([], { month: '2-digit', day: '2-digit' }) + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Extract labels from current data
+  currentEntries.forEach(([iso]) => labels.push(formatLabel(new Date(iso))));
+
   if (component.displayMode === "family") {
-    // Aggregate by family
-    const dataByFamily = {};
-    component.selectedFamilies.forEach((family) => {
-      dataByFamily[family] = [];
-    });
-
-    sortedEntries.forEach(([iso, hourData]) => {
-      const date = new Date(iso);
-      labels.push(formatLabel(date));
-
-      component.selectedFamilies.forEach((family) => {
-        const familyData = hourData[family];
-        const count = familyData?._subtotal || 0;
-        dataByFamily[family].push(count);
-      });
-    });
-
-    // Build datasets for families
     component.selectedFamilies.forEach((family) => {
       const color = window.DashboardFilters.getFamilyColor(family);
-      const familyKey =
-        "family" + family.charAt(0).toUpperCase() + family.slice(1);
-      const label = Alpine.store("global").t(familyKey);
-      datasets.push(
-        window.DashboardCharts.createDataset(
-          label,
-          dataByFamily[family],
-          color,
-          canvas
-        )
-      );
+      const label = Alpine.store("global").t("family" + family.charAt(0).toUpperCase() + family.slice(1));
+      
+      // Current period
+      const currentData = currentEntries.map(([_, data]) => getMetricValue(data, family));
+      datasets.push(window.DashboardCharts.createDataset(label, currentData, color, canvas));
+
+      // Previous period
+      if (component.showComparison && previousEntries.length > 0) {
+        const prevData = previousEntries.map(([_, data]) => getMetricValue(data, family));
+        datasets.push(window.DashboardCharts.createDataset(`${label} (${Alpine.store('global').t('previous')})`, prevData, color, canvas, true));
+      }
     });
   } else {
-    // Show individual models
-    const dataByModel = {};
-
-    // Initialize data arrays
-    component.families.forEach((family) => {
-      (component.selectedModels[family] || []).forEach((model) => {
-        const key = `${family}:${model}`;
-        dataByModel[key] = [];
-      });
-    });
-
-    sortedEntries.forEach(([iso, hourData]) => {
-      const date = new Date(iso);
-      labels.push(formatLabel(date));
-
-      component.families.forEach((family) => {
-        const familyData = hourData[family] || {};
-        (component.selectedModels[family] || []).forEach((model) => {
-          const key = `${family}:${model}`;
-          dataByModel[key].push(familyData[model] || 0);
-        });
-      });
-    });
-
-    // Build datasets for models
     component.families.forEach((family) => {
       (component.selectedModels[family] || []).forEach((model, modelIndex) => {
-        const key = `${family}:${model}`;
         const color = window.DashboardFilters.getModelColor(family, modelIndex);
-        datasets.push(
-          window.DashboardCharts.createDataset(
-            model,
-            dataByModel[key],
-            color,
-            canvas
-          )
-        );
+        
+        // Current period
+        const currentData = currentEntries.map(([_, data]) => getMetricValue(data, family, model));
+        datasets.push(window.DashboardCharts.createDataset(model, currentData, color, canvas));
+
+        // Previous period
+        if (component.showComparison && previousEntries.length > 0) {
+          const prevData = previousEntries.map(([_, data]) => getMetricValue(data, family, model));
+          datasets.push(window.DashboardCharts.createDataset(`${model} (${Alpine.store('global').t('previous')})`, prevData, color, canvas, true));
+        }
       });
     });
   }
 
+  // Update summary metrics for dashboard cards
+  const calculateTotalMetric = (entries) => {
+    let total = 0, count = 0;
+    entries.forEach(([_, data]) => {
+        if (component.analysisMode === 'volume') total += data._total || 0;
+        else if (component.analysisMode === 'success') {
+            const t = data._total || 0;
+            if (t > 0) {
+                total += (data._success || t) / t;
+                count++;
+            }
+        }
+        else if (component.analysisMode === 'latency') {
+            const t = data._total || 0;
+            if (t > 0) {
+                total += (data._latency || 0) / t;
+                count++;
+            }
+        }
+    });
+    if (component.analysisMode === 'volume') return total;
+    return count > 0 ? (total / count) * (component.analysisMode === 'success' ? 100 : 1) : (component.analysisMode === 'success' ? 100 : 0);
+  };
+
+  const currentTotal = calculateTotalMetric(currentEntries);
+  const previousTotal = calculateTotalMetric(previousEntries);
+  
+  component.analysisStats = {
+      current: currentTotal,
+      previous: previousTotal,
+      change: previousTotal > 0 ? Math.round(((currentTotal - previousTotal) / previousTotal) * 100) : 0
+  };
+
   try {
+    const unit = component.analysisMode === 'success' ? '%' : (component.analysisMode === 'latency' ? 'ms' : '');
     const newChart = new Chart(canvas, {
       type: "line",
       data: { labels, datasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: {
-          duration: 300, // Reduced animation for faster updates
-        },
-        interaction: {
-          mode: "index",
-          intersect: false,
-        },
+        animation: { duration: 300 },
+        interaction: { mode: "index", intersect: false },
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor:
-              getThemeColor("--color-space-950") || "rgba(24, 24, 27, 0.9)",
+            backgroundColor: getThemeColor("--color-space-950") || "rgba(24, 24, 27, 0.9)",
             titleColor: getThemeColor("--color-text-main"),
             bodyColor: getThemeColor("--color-text-bright"),
             borderColor: getThemeColor("--color-space-border"),
@@ -544,47 +530,33 @@ window.DashboardCharts.updateTrendChart = function (component) {
             padding: 10,
             displayColors: true,
             callbacks: {
-              label: function (context) {
-                return context.dataset.label + ": " + context.parsed.y;
-              },
+              label: (ctx) => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}${unit}`
             },
           },
         },
         scales: {
           x: {
-            display: true,
             grid: { display: false },
-            ticks: {
-              color: getThemeColor("--color-text-muted"),
-              font: { size: 10 },
-            },
+            ticks: { color: getThemeColor("--color-text-muted"), font: { size: 10 } },
           },
           y: {
-            display: true,
             beginAtZero: true,
-            grid: {
-              display: true,
-              color:
-                getThemeColor("--color-space-border") + "1a" ||
-                "rgba(255,255,255,0.05)",
-            },
-            ticks: {
-              color: getThemeColor("--color-text-muted"),
-              font: { size: 10 },
+            grid: { color: getThemeColor("--color-space-border") + "1a" },
+            ticks: { 
+                color: getThemeColor("--color-text-muted"), 
+                font: { size: 10 },
+                callback: (val) => `${val}${unit}`
             },
           },
         },
       },
     });
     
-    // SAVE INSTANCE
     canvas._chartInstance = newChart;
     component.charts.usageTrend = newChart;
-
   } catch (e) {
     console.error("Failed to create trend chart:", e);
   } finally {
-    // Always release lock
     _trendChartUpdateLock = false;
   }
 };

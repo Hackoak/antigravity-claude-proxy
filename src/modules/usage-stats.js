@@ -103,15 +103,17 @@ function prune() {
 /**
  * Track a request by model ID using hierarchical structure
  * @param {string} modelId - The specific model identifier
+ * @param {object} metadata - Optional metadata (status, latency)
  */
-function track(modelId) {
+function track(modelId, metadata = {}) {
+    const { status = 'success', latency = 0 } = metadata;
     const now = new Date();
     // Round down to nearest hour
     now.setMinutes(0, 0, 0);
     const key = now.toISOString();
 
     if (!history[key]) {
-        history[key] = { _total: 0 };
+        history[key] = { _total: 0, _success: 0, _error: 0, _latency: 0 };
     }
 
     const hourData = history[key];
@@ -120,11 +122,37 @@ function track(modelId) {
 
     // Initialize family object if needed
     if (!hourData[family]) {
-        hourData[family] = { _subtotal: 0 };
+        hourData[family] = { _subtotal: 0, _success: 0, _error: 0, _latency: 0 };
     }
 
-    // Increment model-specific count
-    hourData[family][shortName] = (hourData[family][shortName] || 0) + 1;
+    // Initialize model object if needed for detailed stats
+    if (!hourData[family][shortName]) {
+        hourData[family][shortName] = { count: 0, success: 0, error: 0, latency: 0 };
+    }
+
+    const modelData = typeof hourData[family][shortName] === 'number' 
+        ? { count: hourData[family][shortName], success: hourData[family][shortName], error: 0, latency: 0 }
+        : hourData[family][shortName];
+
+    // Increment model-specific stats
+    modelData.count++;
+    if (status === 'success') {
+        modelData.success++;
+        hourData[family]._success++;
+        hourData._success++;
+    } else {
+        modelData.error++;
+        hourData[family]._error++;
+        hourData._error++;
+    }
+    
+    // Average latency (simplified: sum then divide on frontend or later)
+    modelData.latency += latency;
+    hourData[family]._latency += latency;
+    hourData._latency += latency;
+
+    // Update the object back in case it was a number (migration)
+    hourData[family][shortName] = modelData;
 
     // Increment family subtotal
     hourData[family]._subtotal = (hourData[family]._subtotal || 0) + 1;
@@ -160,7 +188,16 @@ function setupMiddleware(app) {
         if (req.method === 'POST' && TRACKED_PATHS.includes(req.path)) {
             const model = req.body?.model;
             if (model) {
-                track(model);
+                const startTime = Date.now();
+                
+                // We need to hook into res.end to track status and latency
+                const originalEnd = res.end;
+                res.end = function(...args) {
+                    const latency = Date.now() - startTime;
+                    const status = res.statusCode < 400 ? 'success' : 'error';
+                    track(model, { status, latency });
+                    return originalEnd.apply(this, args);
+                };
             }
         }
         next();

@@ -471,4 +471,9 @@ window.translations.zh = {
     weightLru: "LRU 权重",
     // 模型下拉菜单
     clearSelection: "清除选择",
+    previous: "对比周期",
+    successRate: "成功率",
+    avgLatency: "平均延迟",
+    analysisViews: "高级分析",
+    periodComparison: "周期对比分析",
 };
