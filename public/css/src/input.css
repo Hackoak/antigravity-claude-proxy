@@ -28,14 +28,16 @@
   --color-neon-cyan-soft: #0891b2;
 
   /* === Text Hierarchy (WCAG AA Compliant) === */
-  --color-text-primary: #ffffff;
+  --color-text-primary: #DEDEDE;
   /* Emphasis: Titles, Key Numbers */
-  --color-text-secondary: #a1a1aa;
+  --color-text-secondary: #9E9E9E;
   /* Content: Body Text (zinc-400) */
   --color-text-tertiary: #52525b;
   /* Metadata: Timestamps, Labels (zinc-600) */
   --color-text-quaternary: #3f3f46;
   /* Subtle: Decorative (zinc-700) */
+  --color-text-description: #9E9E9E;
+  /* Description/Paragraph text */
 
   /* === Legacy Aliases (Backward Compatibility) === */
   --color-text-main: var(--color-text-secondary);
@@ -66,6 +68,15 @@
   --color-chart-14: #14b8a6;
   --color-chart-15: #f97316;
   --color-chart-16: #6366f1;
+}
+
+/* Global Text Overrides */
+h1, h2, h3, h4, h5, h6 {
+  color: #DEDEDE !important;
+}
+
+p, .view-card p, .view-header-title p, .text-gray-500, .text-gray-400 {
+  color: #9E9E9E !important;
 }
 
 [x-cloak] {
@@ -162,6 +173,48 @@
   background-image: linear-gradient(to right,
       var(--color-neon-red),
       var(--color-red-400));
+}
+
+/* Vercel-style Progress Bar */
+.progress-vercel {
+  @apply h-1 w-full bg-space-800/30 rounded-full overflow-hidden relative;
+}
+
+.progress-vercel-fill {
+  @apply h-full transition-all duration-500 ease-in-out;
+}
+
+.progress-vercel-success {
+  @apply bg-green-500 shadow-[0_0_8px_#22c55e66];
+}
+
+.progress-vercel-warning {
+  @apply bg-yellow-500 shadow-[0_0_8px_#eab30866];
+}
+
+.progress-vercel-error {
+  @apply bg-red-500 shadow-[0_0_8px_#ef444466];
+}
+
+/* Indicator Dots/Squares */
+.indicator-vercel {
+  @apply w-2 h-2 rounded-[1.5px] transition-all duration-200;
+}
+
+.indicator-vercel-success {
+  @apply bg-green-500/80 hover:bg-green-500;
+}
+
+.indicator-vercel-warning {
+  @apply bg-yellow-500/80 hover:bg-yellow-500;
+}
+
+.indicator-vercel-error {
+  @apply bg-red-500/80 hover:bg-red-500;
+}
+
+.indicator-vercel-empty {
+  @apply bg-space-800;
 }
 
 /* Dashboard Grid */
@@ -309,6 +362,58 @@
   width: 1.625rem !important;
   min-height: 0.875rem !important;
   --handleoffset: 0.75rem !important;
+}
+
+/* Settings UI toggle: icon container (square, rounded, thin light border) */
+.settings-toggle-icon {
+  @apply shrink-0 w-9 h-9 rounded-md flex items-center justify-center;
+  border: 1px solid rgba(255 255 255 / 0.04);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Settings UI toggle: compact switch (oval track, light gray handle, thinner border) - match reference */
+.toggle-settings {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.toggle-settings-track {
+  display: block;
+  width: 32px;
+  height: 18px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  background: rgba(30, 30, 33, 0.95);
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.toggle-settings-track::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 3.5px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #d1d5db;
+  transform: translateY(-50%);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* checked: handle moves right (32 - 11 - 7 total padding = 14px) */
+.toggle-settings .peer:checked ~ .toggle-settings-track::after {
+  transform: translate(13px, -50%);
+}
+
+.toggle-settings .peer:checked ~ .toggle-settings-track {
+  border-color: rgba(212, 162, 127, 0.5);
+  background: #d4a27f52;
 }
 
 /* Custom Range Slider - Simplified */

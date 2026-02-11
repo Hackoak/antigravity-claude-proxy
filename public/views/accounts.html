@@ -132,11 +132,10 @@
                 <template x-for="acc in filteredAccounts" :key="acc.email">
                     <tr class="border-b border-space-border/30 last:border-0 hover:bg-white/5 transition-colors group">
                         <td class="pl-6 py-4">
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer"
-                                    :checked="acc.enabled !== false"
-                                    @change="toggleAccount(acc.email, $el.checked)">
-                                <div class="w-9 h-5 bg-space-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-gray-600 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neon-green peer-checked:after:bg-white"></div>
+                            <label class="toggle-settings" @click.stop>
+                                <input type="checkbox" class="sr-only peer" :checked="acc.enabled !== false"
+                                    @change="toggleAccount(acc.email, $event.target.checked)">
+                                <span class="toggle-settings-track" aria-hidden="true"></span>
                             </label>
                         </td>
                         <td class="py-4">
@@ -164,17 +163,16 @@
                             <div x-data="{ quota: getMainModelQuota(acc) }">
                                 <template x-if="quota.percent !== null">
                                     <div class="flex items-center gap-2">
-                                        <div class="w-16 bg-gray-700 rounded-full h-2 overflow-hidden">
-                                            <div class="h-full rounded-full transition-all"
-                                                 :class="{
-                                                     'bg-neon-green': quota.percent > 50,
-                                                     'bg-yellow-500': quota.percent > 20 && quota.percent <= 50,
-                                                     'bg-red-500': quota.percent <= 20
-                                                 }"
-                                                 :style="`width: ${quota.percent}%`">
+                                        <div class="w-10 progress-vercel">
+                                            <div class="progress-vercel-fill" :class="{
+                                                     'progress-vercel-success': quota.percent > 50,
+                                                     'progress-vercel-warning': quota.percent > 20 && quota.percent <= 50,
+                                                     'progress-vercel-error': quota.percent <= 20
+                                                 }" :style="`width: ${quota.percent}%`">
                                             </div>
                                         </div>
-                                        <span class="text-xs font-mono text-gray-400" x-text="quota.percent + '%'"></span>
+                                        <span class="text-xs font-mono text-gray-500"
+                                            x-text="quota.percent + '%'"></span>
                                     </div>
                                 </template>
                                 <template x-if="quota.percent === null">
@@ -453,10 +451,10 @@
                             </div>
                         </div>
 
-                        <div class="w-full bg-gray-700 rounded-full h-2.5 mb-2 overflow-hidden">
-                            <div class="h-full rounded-full transition-all duration-500"
-                                 :class="limit.remainingFraction > 0.5 ? 'bg-neon-green' : (limit.remainingFraction > 0.2 ? 'bg-yellow-500' : 'bg-red-500')"
-                                 :style="`width: ${limit.remainingFraction * 100}%`">
+                        <div class="progress-vercel mb-2 !h-1.5">
+                            <div class="progress-vercel-fill"
+                                :class="limit.remainingFraction > 0.5 ? 'progress-vercel-success' : (limit.remainingFraction > 0.2 ? 'progress-vercel-warning' : 'progress-vercel-error')"
+                                :style="`width: ${limit.remainingFraction * 100}%`">
                             </div>
                         </div>
 
@@ -484,7 +482,7 @@
             </div>
         </div>
         <form method="dialog" class="modal-backdrop">
-            <button x-text="$store.global.t('close')">close</button>
+            <button class='btn btn-ghost hover:bg-white/10' x-text="$store.global.t('close')">close</button>
         </form>
     </dialog>
 

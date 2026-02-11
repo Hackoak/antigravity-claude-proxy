@@ -193,14 +193,19 @@
                         <tr class="group transition-all duration-300"
                             :class="row.hidden ? 'opacity-40 grayscale hover:opacity-100 hover:grayscale-0 bg-space-900/50' : ''">
                             <td class="!pl-4">
-                                <div class="w-2 h-2 rounded-full transition-all duration-500"
-                                    :class="row.avgQuota > 0 ? 'bg-neon-green shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'">
+                                <!-- Clean Vercel-style status badge -->
+                                <div class="flex items-center justify-center w-6 h-6 rounded-md border transition-all"
+                                    :class="row.avgQuota > 50 ? 'bg-green-500/10 border-green-500/20' : (row.avgQuota > 0 ? 'bg-yellow-500/10 border-yellow-500/20' : 'bg-red-500/10 border-red-500/20')">
+                                    <div class="w-1.5 h-1.5 rounded-full"
+                                        :class="row.avgQuota > 50 ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]' : (row.avgQuota > 0 ? 'bg-yellow-500 shadow-[0_0_5px_rgba(234,179,8,0.5)]' : 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]')">
+                                    </div>
                                 </div>
                             </td>
                             <td>
-                                <div class="font-bold text-gray-200 group-hover:text-primary transition-colors"
-                                    :class="$store.settings.compact ? 'text-xs' : ''" x-text="row.modelId"></div>
-                                <div class="text-[10px] font-mono text-gray-500 uppercase"
+                                <div class="font-bold text-gray-200 group-hover:text-primary transition-colors tracking-tight"
+                                    :class="$store.settings.compact ? 'text-xs' : 'text-[13px]'" x-text="row.modelId">
+                                </div>
+                                <div class="text-[9px] font-mono text-gray-600 uppercase tracking-tighter"
                                     x-show="!$store.settings.compact"
                                     x-text="$store.global.t('family' + row.family.charAt(0).toUpperCase() + row.family.slice(1))">
                                 </div>
@@ -229,8 +234,8 @@
                                                 class="inline-flex gap-0.5 items-center">
                                                 <template x-for="q in row.quotaInfo.slice(0, 8)"
                                                     :key="q.fullEmail + '-sq'">
-                                                    <span class="w-1.5 h-1.5 rounded-sm inline-block"
-                                                        :class="q.pct > 50 ? 'bg-neon-green/80' : (q.pct > 0 ? 'bg-yellow-500/80' : 'bg-red-900/60')"></span>
+                                                    <span class="indicator-vercel !rounded-sm !w-1.5 !h-1.5"
+                                                        :class="q.pct > 50 ? 'indicator-vercel-success' : (q.pct > 0 ? 'indicator-vercel-warning' : 'indicator-vercel-error')"></span>
                                                 </template>
                                                 <span x-show="row.quotaInfo.length > 8"
                                                     class="text-[8px] text-gray-600 leading-none"
@@ -241,11 +246,13 @@
                                                 x-text="row.quotaInfo.filter(q => q.pct > 0).length + '/' + row.quotaInfo.length"></span>
                                         </span>
                                     </div>
-                                    <div class="relative">
-                                        <progress class="progress w-full bg-space-800" :class="[
-                                            $store.settings.compact ? 'h-1' : 'h-1.5',
-                                            row.avgQuota > 50 ? 'progress-gradient-success' : (row.avgQuota > 0 ? 'progress-gradient-warning' : 'progress-gradient-error')
-                                        ]" :value="row.avgQuota" max="100"></progress>
+                                    <div class="relative mt-1">
+                                        <!-- Clean Vercel-style progress bar -->
+                                        <div class="progress-vercel">
+                                            <div class="progress-vercel-fill"
+                                                :class="row.avgQuota > 50 ? 'progress-vercel-success' : (row.avgQuota > 0 ? 'progress-vercel-warning' : 'progress-vercel-error')"
+                                                :style="'width: ' + row.avgQuota + '%'"></div>
+                                        </div>
                                         <!-- Per-account draggable quota threshold markers -->
                                         <template
                                             x-for="(q, qIdx) in row.quotaInfo.filter(q => q.thresholdPct > 0 || isDragging(q, row))"
@@ -283,13 +290,13 @@
                                                 <span
                                                     class="text-[10px] font-mono text-gray-500 w-20 truncate text-right flex-shrink-0"
                                                     x-text="Redact.email(q.email)"></span>
-                                                <div class="flex-1 h-1 rounded-full bg-space-800 overflow-hidden">
-                                                    <div class="h-full rounded-full transition-all duration-500"
-                                                        :class="q.pct > 50 ? 'bg-neon-green/70' : (q.pct > 0 ? 'bg-yellow-500/70' : 'bg-red-500/50')"
+                                                <div class="flex-1 h-0.5 rounded-full bg-space-800/50 overflow-hidden">
+                                                    <div class="h-full transition-all duration-500"
+                                                        :class="q.pct > 50 ? 'bg-green-500/60' : (q.pct > 0 ? 'bg-yellow-500/60' : 'bg-red-500/60')"
                                                         :style="'width: ' + q.pct + '%'"></div>
                                                 </div>
                                                 <span class="text-[10px] font-mono w-8 text-right flex-shrink-0"
-                                                    :class="q.pct > 0 ? 'text-gray-400' : 'text-red-500/70'"
+                                                    :class="q.pct > 0 ? 'text-gray-500' : 'text-red-500/50'"
                                                     x-text="q.pct + '%'"></span>
                                                 <span x-show="q.resetTime"
                                                     class="text-[9px] font-mono text-gray-600 w-12 text-right flex-shrink-0"
@@ -338,8 +345,8 @@
                                                     :key="q.fullEmail">
                                                     <div class="tooltip tooltip-left"
                                                         :data-tip="`${Redact.email(q.fullEmail)} (${q.pct}%)` + (q.thresholdPct > 0 ? ` · min: ${q.thresholdPct}%` : '')">
-                                                        <div class="w-2.5 h-2.5 rounded-[2px] transition-all hover:scale-125 cursor-help"
-                                                            :class="q.pct > 50 ? 'bg-neon-green opacity-80' : (q.pct > 0 ? 'bg-yellow-500 opacity-80' : 'bg-red-900 opacity-50')">
+                                                        <div class="indicator-vercel hover:scale-125 cursor-help"
+                                                            :class="q.pct > 50 ? 'indicator-vercel-success' : (q.pct > 0 ? 'indicator-vercel-warning' : 'indicator-vercel-error')">
                                                         </div>
                                                     </div>
                                                 </template>

@@ -16,8 +16,8 @@
     <!-- Horizontal Tabs -->
     <div
         class="flex items-center gap-8 border-b border-space-border/30 mb-8 overflow-x-auto custom-scrollbar no-scrollbar">
-        <button @click="setTab('interface')" class="pb-3 text-sm font-medium transition-all relative whitespace-nowrap"
-            :class="$store.global.settingsTab === 'interface' ? 'text-primary' : 'text-gray-500 hover:text-gray-300'">
+        <button @click="setTab('interface')" class="pb-3 text-sm transition-all relative whitespace-nowrap"
+            :class="$store.global.settingsTab === 'interface' ? 'text-white font-bold' : 'text-gray-500 font-medium hover:text-gray-300'">
             <div class="flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
@@ -27,8 +27,8 @@
             <div x-show="$store.global.settingsTab === 'interface'"
                 class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full animate-fade-in"></div>
         </button>
-        <button @click="setTab('claude')" class="pb-3 text-sm font-medium transition-all relative whitespace-nowrap"
-            :class="$store.global.settingsTab === 'claude' ? 'text-primary' : 'text-gray-500 hover:text-gray-300'">
+        <button @click="setTab('claude')" class="pb-3 text-sm transition-all relative whitespace-nowrap"
+            :class="$store.global.settingsTab === 'claude' ? 'text-white font-bold' : 'text-gray-500 font-medium hover:text-gray-300'">
             <div class="flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -39,8 +39,8 @@
             <div x-show="$store.global.settingsTab === 'claude'"
                 class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full animate-fade-in"></div>
         </button>
-        <button @click="setTab('models')" class="pb-3 text-sm font-medium transition-all relative whitespace-nowrap"
-            :class="$store.global.settingsTab === 'models' ? 'text-primary' : 'text-gray-500 hover:text-gray-300'">
+        <button @click="setTab('models')" class="pb-3 text-sm transition-all relative whitespace-nowrap"
+            :class="$store.global.settingsTab === 'models' ? 'text-white font-bold' : 'text-gray-500 font-medium hover:text-gray-300'">
             <div class="flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -51,8 +51,8 @@
             <div x-show="$store.global.settingsTab === 'models'"
                 class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full animate-fade-in"></div>
         </button>
-        <button @click="setTab('server')" class="pb-3 text-sm font-medium transition-all relative whitespace-nowrap"
-            :class="$store.global.settingsTab === 'server' ? 'text-primary' : 'text-gray-500 hover:text-gray-300'">
+        <button @click="setTab('server')" class="pb-3 text-sm transition-all relative whitespace-nowrap"
+            :class="$store.global.settingsTab === 'server' ? 'text-white font-bold' : 'text-gray-500 font-medium hover:text-gray-300'">
             <div class="flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -136,57 +136,82 @@
 
                 <!-- UI Toggles Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="view-card !p-5 flex items-center justify-between border-primary/10 bg-primary/[0.02]"
-                        @click="$store.settings.toggle('showExhausted')">
-                        <div class="flex flex-col gap-1">
-                            <span class="text-sm font-bold text-white">Show Exhausted Models</span>
-                            <p class="text-[11px] text-gray-500 leading-tight">Display models even if they have 0%
-                                remaining
-                                quota.</p>
-                        </div>
-                        <input type="checkbox" class="toggle toggle-xs toggle-primary bg-space-900 border-space-border"
-                            x-model="$store.settings.showExhausted" @click.stop>
-                    </div>
-                    <div class="view-card !p-5 flex items-center justify-between"
+                    <!-- Compact Mode -->
+                    <div class="view-card !p-5 flex items-center justify-between gap-4 cursor-pointer"
                         @click="$store.settings.toggle('compact')">
-                        <div class="flex flex-col gap-1">
-                            <span class="text-sm font-bold text-white">Compact Mode</span>
-                            <p class="text-[11px] text-gray-500 leading-tight">Reduce padding in tables for higher
-                                information density.</p>
-                        </div>
-                        <input type="checkbox" class="toggle toggle-xs toggle-primary bg-space-900 border-space-border"
-                            x-model="$store.settings.compact" @click.stop>
-                    </div>
-                    <div class="view-card !p-5 flex items-center justify-between"
-                        @click="$store.settings.toggle('redactMode')">
-                        <div class="flex flex-col gap-1">
-                            <span class="text-sm font-bold text-white">Redaction Mode</span>
-                            <p class="text-[11px] text-gray-500 leading-tight">Mask sensitive data like emails and API
-                                keys.
-                            </p>
-                        </div>
-                        <input type="checkbox" class="toggle toggle-xs toggle-primary bg-space-900 border-space-border"
-                            x-model="$store.settings.redactMode" @click.stop>
-                    </div>
-
-                    <div class="form-control bg-space-900/50 p-4 rounded-lg border transition-all duration-300 hover:border-amber-500/50"
-                        :class="$store.settings.showConfigWarning ? 'border-amber-500/50 bg-amber-500/5 shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 'border-space-border/50'">
-                        <div class="flex items-center justify-between">
-                            <div class="flex flex-col gap-1">
-                                <span class="label-text font-medium transition-colors"
-                                    :class="$store.settings.showConfigWarning ? 'text-amber-400' : 'text-gray-300'"
-                                    x-text="$store.global.t('showConfigWarning')">Show Config Warning</span>
-                                <span class="text-xs text-gray-500" x-text="$store.global.t('showConfigWarningDesc')">Display a warning on Dashboard when Claude CLI config doesn't match preset.</span>
+                        <div class="flex items-center gap-4 min-w-0 flex-1">
+                            <div class="settings-toggle-icon">
+                                <svg class="w-5 h-5 text-gray-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M4 6h16M4 12h16m-7 6h7" />
+                                </svg>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer" :checked="$store.settings.showConfigWarning === true"
-                                    @change="$store.settings.showConfigWarning = $event.target.checked; $store.settings.saveSettings(true)"
-                                    aria-label="Show config warning toggle">
-                                <div
-                                    class="w-9 h-5 bg-space-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-gray-600 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500 peer-checked:after:bg-white">
-                                </div>
-                            </label>
+                            <div class="flex flex-col gap-1 min-w-0">
+                                <span class="text-sm font-bold text-white">Compact Mode</span>
+                                <p class="text-[11px] text-gray-500 leading-tight">Higher density layout for tables and lists.</p>
+                            </div>
                         </div>
+                        <label class="toggle-settings" @click.stop>
+                            <input type="checkbox" class="sr-only peer" x-model="$store.settings.compact" aria-label="Compact mode">
+                            <span class="toggle-settings-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+                    <!-- Show Exhausted -->
+                    <div class="view-card !p-5 flex items-center justify-between gap-4 cursor-pointer"
+                        @click="$store.settings.toggle('showExhausted')">
+                        <div class="flex items-center gap-4 min-w-0 flex-1">
+                            <div class="settings-toggle-icon">
+                                <svg class="w-5 h-5 text-gray-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+                            <div class="flex flex-col gap-1 min-w-0">
+                                <span class="text-sm font-bold text-white">Show Exhausted</span>
+                                <p class="text-[11px] text-gray-500 leading-tight">Display models even if they have 0% quota.</p>
+                            </div>
+                        </div>
+                        <label class="toggle-settings" @click.stop>
+                            <input type="checkbox" class="sr-only peer" x-model="$store.settings.showExhausted" aria-label="Show exhausted models">
+                            <span class="toggle-settings-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+                    <!-- Redaction Mode -->
+                    <div class="view-card !p-5 flex items-center justify-between gap-4 cursor-pointer"
+                        @click="$store.settings.toggle('redactMode')">
+                        <div class="flex items-center gap-4 min-w-0 flex-1">
+                            <div class="settings-toggle-icon">
+                                <svg class="w-5 h-5 text-gray-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                            </div>
+                            <div class="flex flex-col gap-1 min-w-0">
+                                <span class="text-sm font-bold text-white">Redaction Mode</span>
+                                <p class="text-[11px] text-gray-500 leading-tight">Mask sensitive API keys and personal emails.</p>
+                            </div>
+                        </div>
+                        <label class="toggle-settings" @click.stop>
+                            <input type="checkbox" class="sr-only peer" x-model="$store.settings.redactMode" aria-label="Redaction mode">
+                            <span class="toggle-settings-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+                    <!-- Show Config Warning (in grid) -->
+                    <div class="view-card !p-5 flex items-center justify-between gap-4 cursor-pointer"
+                        :class="$store.settings.showConfigWarning ? 'border-amber-500/40 bg-amber-500/5' : ''"
+                        @click="$store.settings.toggle('showConfigWarning')">
+                        <div class="flex items-center gap-4 min-w-0 flex-1">
+                            <div class="settings-toggle-icon">
+                                <svg class="w-4 h-4" :class="$store.settings.showConfigWarning ? 'text-amber-400' : 'text-amber-500/80'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div class="flex flex-col gap-1 min-w-0">
+                                <span class="text-sm font-bold transition-colors" :class="$store.settings.showConfigWarning ? 'text-amber-400' : 'text-white'" x-text="$store.global.t('showConfigWarning')">Show Config Warning</span>
+                                <p class="text-[11px] text-gray-500 leading-tight" x-text="$store.global.t('showConfigWarningDesc')">Display a warning on Dashboard when Claude CLI config doesn't match preset.</p>
+                            </div>
+                        </div>
+                        <label class="toggle-settings" @click.stop>
+                            <input type="checkbox" class="sr-only peer" x-model="$store.settings.showConfigWarning" @change="$store.settings.saveSettings(true)" aria-label="Show config warning">
+                            <span class="toggle-settings-track" aria-hidden="true"></span>
+                        </label>
                     </div>
                 </div>
             </div>
@@ -234,10 +259,12 @@
                             <span class="text-[10px] font-bold uppercase tracking-widest transition-colors duration-200"
                                 :class="currentMode === 'proxy' ? 'text-primary' : 'text-gray-600'">Proxy</span>
                             <div class="flex items-center">
-                                <input type="checkbox" class="toggle toggle-xs"
-                                    :class="currentMode === 'paid' ? 'toggle-success' : 'toggle-primary'"
-                                    :checked="currentMode === 'paid'" :disabled="modeLoading"
-                                    @change="toggleMode($event.target.checked ? 'paid' : 'proxy')">
+                                <label class="toggle-settings" @click.stop>
+                                    <input type="checkbox" class="sr-only peer"
+                                        :checked="currentMode === 'paid'" :disabled="modeLoading"
+                                        @change="toggleMode($event.target.checked ? 'paid' : 'proxy')">
+                                    <span class="toggle-settings-track" aria-hidden="true"></span>
+                                </label>
                             </div>
                             <span class="text-[10px] font-bold uppercase tracking-widest transition-colors duration-200"
                                 :class="currentMode === 'paid' ? 'text-green-400' : 'text-gray-600'">Paid</span>
@@ -493,9 +520,12 @@
                                         consumption.
                                     </p>
                                 </div>
-                                <input type="checkbox" class="toggle toggle-xs toggle-primary bg-space-900"
-                                    :checked="config.env.ENABLE_EXPERIMENTAL_MCP_CLI === 'true'"
-                                    @change="config.env.ENABLE_EXPERIMENTAL_MCP_CLI = $event.target.checked ? 'true' : 'false'">
+                                <label class="toggle-settings" @click.stop>
+                                    <input type="checkbox" class="sr-only peer"
+                                        :checked="config.env.ENABLE_EXPERIMENTAL_MCP_CLI === 'true'"
+                                        @change="config.env.ENABLE_EXPERIMENTAL_MCP_CLI = $event.target.checked ? 'true' : 'false'">
+                                    <span class="toggle-settings-track" aria-hidden="true"></span>
+                                </label>
                             </div>
                             <div class="border-t border-space-border/20 pt-6 flex items-center justify-between">
                                 <div class="flex flex-col gap-1">
@@ -504,8 +534,11 @@
                                         Appends [1m] suffix to Gemini models for 1M context window support.
                                     </p>
                                 </div>
-                                <input type="checkbox" class="toggle toggle-xs toggle-primary bg-space-900"
-                                    x-model="gemini1mSuffix" @change="toggleGemini1mSuffix($event.target.checked)">
+                                <label class="toggle-settings" @click.stop>
+                                    <input type="checkbox" class="sr-only peer"
+                                        x-model="gemini1mSuffix" @change="toggleGemini1mSuffix($event.target.checked)">
+                                    <span class="toggle-settings-track" aria-hidden="true"></span>
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -553,8 +586,11 @@
                             class="flex items-center gap-2 bg-space-900/50 px-3 py-1.5 rounded-lg border border-space-border/30">
                             <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Show Hidden
                                 Models</span>
-                            <input type="checkbox" class="toggle toggle-xs toggle-primary bg-space-900"
-                                x-model="$store.settings.showHiddenModels">
+                            <label class="toggle-settings" @click.stop>
+                                <input type="checkbox" class="sr-only peer"
+                                    x-model="$store.settings.showHiddenModels">
+                                <span class="toggle-settings-track" aria-hidden="true"></span>
+                            </label>
                         </div>
                     </div>
 
@@ -730,24 +766,30 @@
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Server Configuration Presets -->
-                <div class="card bg-space-900/30 border border-neon-purple/30 p-5">
+                <div class="view-card !p-5">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-neon-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                            <label class="text-xs uppercase text-neon-purple font-semibold"
+                            <label class="text-xs uppercase text-primary font-semibold"
                                 x-text="$store.global.t('serverPresets')">Server Presets</label>
                         </div>
-                        <button class="btn btn-xs btn-ghost text-neon-purple hover:bg-neon-purple/10 gap-1"
+                        <button class="btn btn-xs btn-ghost text-primary hover:bg-primary/10 gap-1"
                             @click="saveCurrentAsServerPreset()" :disabled="savingServerPreset">
-                            <svg x-show="!savingServerPreset" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            <svg x-show="!savingServerPreset" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
                             </svg>
-                            <span x-show="!savingServerPreset" x-text="$store.global.t('saveAsPreset')">Save as Preset</span>
+                            <span x-show="!savingServerPreset" x-text="$store.global.t('saveAsPreset')">Save as
+                                Preset</span>
                             <span x-show="savingServerPreset" class="loading loading-spinner loading-xs"></span>
                         </button>
                     </div>
@@ -755,35 +797,37 @@
                         <select
                             class="select select-sm bg-space-800 border-space-border text-white flex-1 font-mono text-xs"
                             :disabled="serverPresets.length === 0 || loadingPreset || editingPresetConfig"
-                            :value="selectedServerPreset"
-                            @change="selectedServerPreset = $event.target.value"
+                            :value="selectedServerPreset" @change="selectedServerPreset = $event.target.value"
                             aria-label="Select server preset">
                             <option value="" disabled x-show="serverPresets.length === 0">No presets available</option>
                             <template x-for="preset in serverPresets" :key="preset.name">
-                                <option :value="preset.name"
-                                    x-text="preset.builtIn ? preset.name + ' 🔒' : preset.name"
+                                <option :value="preset.name" x-text="preset.builtIn ? preset.name + ' 🔒' : preset.name"
                                     :selected="preset.name === selectedServerPreset"></option>
                             </template>
                         </select>
-                        <button class="btn btn-sm btn-ghost text-neon-purple hover:bg-neon-purple/10"
+                        <button class="btn btn-sm btn-ghost text-primary hover:bg-primary/10"
                             @click="loadServerPreset(selectedServerPreset)"
                             :disabled="!selectedServerPreset || loadingPreset || editingPresetConfig"
                             :title="$store.global.t('loadServerPreset') || 'Load preset'"
                             :aria-label="$store.global.t('loadServerPreset') || 'Load preset'">
                             <span x-show="!loadingPreset">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                 </svg>
                             </span>
                             <span x-show="loadingPreset" class="loading loading-spinner loading-xs"></span>
                         </button>
-                        <button class="btn btn-sm btn-ghost text-neon-purple hover:bg-neon-purple/10"
+                        <button class="btn btn-sm btn-ghost text-primary hover:bg-primary/10"
                             @click="editServerPreset()"
                             :disabled="!selectedServerPreset || isSelectedPresetBuiltIn() || editingPresetConfig"
                             :title="$store.global.t('editPreset') || 'Edit preset'"
                             :aria-label="$store.global.t('editPreset') || 'Edit preset'">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                         </button>
                         <button class="btn btn-sm btn-ghost text-red-400 hover:bg-red-500/10"
@@ -792,15 +836,18 @@
                             :title="isSelectedPresetBuiltIn() ? ($store.global.t('cannotDeleteBuiltIn') || 'Cannot delete built-in presets') : ($store.global.t('deletePreset') || 'Delete preset')"
                             :aria-label="isSelectedPresetBuiltIn() ? ($store.global.t('cannotDeleteBuiltIn') || 'Cannot delete built-in presets') : ($store.global.t('deletePreset') || 'Delete preset')">
                             <span x-show="!deletingServerPreset">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
                             </span>
                             <span x-show="deletingServerPreset" class="loading loading-spinner loading-xs"></span>
                         </button>
                     </div>
                     <!-- Preset description (built-in via i18n key, custom via raw description) -->
-                    <template x-if="selectedServerPreset && (serverPresets.find(p => p.name === selectedServerPreset)?.descriptionKey || serverPresets.find(p => p.name === selectedServerPreset)?.description)">
+                    <template
+                        x-if="selectedServerPreset && (serverPresets.find(p => p.name === selectedServerPreset)?.descriptionKey || serverPresets.find(p => p.name === selectedServerPreset)?.description)">
                         <p class="text-[11px] text-gray-400 mt-2 bg-space-800/50 rounded px-2.5 py-1.5 border border-space-border/30"
                             x-text="serverPresets.find(p => p.name === selectedServerPreset)?.descriptionKey ? $store.global.t(serverPresets.find(p => p.name === selectedServerPreset).descriptionKey) : serverPresets.find(p => p.name === selectedServerPreset)?.description">
                         </p>
@@ -809,26 +856,33 @@
                     <template x-if="selectedServerPreset && getPresetPreviewSections()">
                         <div class="mt-2" x-data="{ get preview() { return getPresetPreviewSections() } }">
                             <div class="flex items-center gap-2">
-                                <button class="flex items-center gap-1 text-[10px] text-gray-500 hover:text-neon-purple transition-colors"
+                                <button
+                                    class="flex items-center gap-1 text-[10px] text-gray-500 hover:text-primary transition-colors"
                                     @click="presetPreviewExpanded = !presetPreviewExpanded">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 transition-transform duration-200"
-                                        :class="presetPreviewExpanded ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="w-3 h-3 transition-transform duration-200"
+                                        :class="presetPreviewExpanded ? 'rotate-90' : ''" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5l7 7-7 7" />
                                     </svg>
-                                    <span x-text="presetPreviewExpanded ? ($store.global.t('presetPreviewHide') || 'Hide Preview') : ($store.global.t('presetPreviewLabel') || 'Preview Config')"></span>
+                                    <span
+                                        x-text="presetPreviewExpanded ? ($store.global.t('presetPreviewHide') || 'Hide Preview') : ($store.global.t('presetPreviewLabel') || 'Preview Config')"></span>
                                 </button>
                                 <!-- Edit Config button -->
-                                <button x-show="presetPreviewExpanded && !isSelectedPresetBuiltIn() && !editingPresetConfig"
+                                <button
+                                    x-show="presetPreviewExpanded && !isSelectedPresetBuiltIn() && !editingPresetConfig"
                                     @click="enterPresetConfigEdit()"
                                     class="text-[10px] text-neon-cyan hover:text-neon-cyan/80 transition-colors flex items-center gap-0.5">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                     </svg>
                                     <span x-text="$store.global.t('editPresetConfig') || 'Edit Config'"></span>
                                 </button>
                             </div>
-                            <div x-show="presetPreviewExpanded"
-                                x-transition:enter="transition ease-out duration-150"
+                            <div x-show="presetPreviewExpanded" x-transition:enter="transition ease-out duration-150"
                                 x-transition:enter-start="opacity-0 -translate-y-1"
                                 x-transition:enter-end="opacity-100 translate-y-0"
                                 x-transition:leave="transition ease-in duration-100"
@@ -848,7 +902,7 @@
                                 <!-- Strategy badge (read-only) -->
                                 <div class="mb-2" x-show="!editingPresetConfig">
                                     <span class="inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full border"
-                                        :class="preview.strategyDiffers ? 'text-neon-cyan border-neon-cyan/30 bg-neon-cyan/5' : 'text-neon-purple border-neon-purple/30 bg-neon-purple/5'"
+                                        :class="preview.strategyDiffers ? 'text-neon-cyan border-neon-cyan/30 bg-neon-cyan/5' : 'text-primary border-primary/30 bg-primary/5'"
                                         x-text="preview.strategyLabel">
                                     </span>
                                 </div>
@@ -856,21 +910,29 @@
                                 <div x-show="configEditMode === 'ui' || !editingPresetConfig">
                                     <!-- Strategy dropdown (editing) -->
                                     <div class="mb-2" x-show="editingPresetConfig">
-                                        <label class="text-[10px] uppercase tracking-wider text-gray-600 font-semibold">Strategy</label>
-                                        <select class="select select-sm bg-space-800 border-space-border text-white text-xs w-full mt-0.5"
+                                        <label
+                                            class="text-[10px] uppercase tracking-wider text-gray-600 font-semibold">Strategy</label>
+                                        <select
+                                            class="select select-sm bg-space-800 border-space-border text-white text-xs w-full mt-0.5"
                                             x-model="editingConfigDraft.accountSelection.strategy">
-                                            <option value="sticky" x-text="$store.global.t('strategyStickyLabel') || 'Sticky'"></option>
-                                            <option value="round-robin" x-text="$store.global.t('strategyRoundRobinLabel') || 'Round Robin'"></option>
-                                            <option value="hybrid" x-text="$store.global.t('strategyHybridLabel') || 'Hybrid'"></option>
+                                            <option value="sticky"
+                                                x-text="$store.global.t('strategyStickyLabel') || 'Sticky'"></option>
+                                            <option value="round-robin"
+                                                x-text="$store.global.t('strategyRoundRobinLabel') || 'Round Robin'">
+                                            </option>
+                                            <option value="hybrid"
+                                                x-text="$store.global.t('strategyHybridLabel') || 'Hybrid'"></option>
                                         </select>
                                     </div>
                                     <!-- Sections -->
                                     <template x-for="section in preview.sections" :key="section.label">
                                         <div class="mb-1.5 last:mb-0">
-                                            <div class="text-[10px] uppercase tracking-wider text-gray-600 font-semibold mb-0.5" x-text="section.label"></div>
+                                            <div class="text-[10px] uppercase tracking-wider text-gray-600 font-semibold mb-0.5"
+                                                x-text="section.label"></div>
                                             <template x-for="row in section.rows" :key="row.key">
                                                 <div class="flex justify-between items-center py-px gap-2">
-                                                    <span class="text-[11px] text-gray-500 shrink-0" x-text="row.label"></span>
+                                                    <span class="text-[11px] text-gray-500 shrink-0"
+                                                        x-text="row.label"></span>
                                                     <!-- Read-only value -->
                                                     <span x-show="!editingPresetConfig" class="text-[11px] font-mono"
                                                         :class="row.differs ? 'text-neon-cyan' : 'text-gray-400'"
@@ -894,7 +956,8 @@
                                                                 @change="validatePresetConfigField(row.key, $event.target.value)"
                                                                 @input="editingConfigDraft[row.key] = Number($event.target.value)">
                                                         </template>
-                                                        <span x-show="row.suffix" class="text-[10px] text-gray-600 w-5" x-text="row.suffix"></span>
+                                                        <span x-show="row.suffix" class="text-[10px] text-gray-600 w-5"
+                                                            x-text="row.suffix"></span>
                                                     </div>
                                                 </div>
                                             </template>
@@ -903,29 +966,33 @@
                                 </div>
                                 <!-- JSON mode content -->
                                 <div x-show="editingPresetConfig && configEditMode === 'json'">
-                                    <textarea class="textarea w-full font-mono text-[11px] bg-space-800 border-space-border text-white leading-relaxed"
+                                    <textarea
+                                        class="textarea w-full font-mono text-[11px] bg-space-800 border-space-border text-white leading-relaxed"
                                         rows="22" x-model="editingJsonText" @input="validateJsonText()"></textarea>
-                                    <p x-show="jsonParseError" class="text-[10px] text-red-400 mt-1" x-text="jsonParseError"></p>
+                                    <p x-show="jsonParseError" class="text-[10px] text-red-400 mt-1"
+                                        x-text="jsonParseError"></p>
                                 </div>
                                 <!-- Save/Cancel buttons -->
-                                <div x-show="editingPresetConfig" class="flex justify-end gap-2 mt-2 pt-2 border-t border-space-border/20">
-                                    <button class="btn btn-xs btn-ghost text-gray-400"
-                                        @click="cancelPresetConfigEdit()"
+                                <div x-show="editingPresetConfig"
+                                    class="flex justify-end gap-2 mt-2 pt-2 border-t border-space-border/20">
+                                    <button class="btn btn-xs btn-ghost text-gray-400" @click="cancelPresetConfigEdit()"
                                         :disabled="savingPresetConfig"
                                         x-text="$store.global.t('cancel') || 'Cancel'"></button>
                                     <button class="btn btn-xs bg-neon-cyan text-black hover:bg-neon-cyan/80"
                                         @click="savePresetConfig()"
                                         :disabled="hasPresetConfigErrors() || savingPresetConfig">
-                                        <span x-show="!savingPresetConfig" x-text="$store.global.t('save') || 'Save'"></span>
-                                        <span x-show="savingPresetConfig" class="loading loading-spinner loading-xs"></span>
+                                        <span x-show="!savingPresetConfig"
+                                            x-text="$store.global.t('save') || 'Save'"></span>
+                                        <span x-show="savingPresetConfig"
+                                            class="loading loading-spinner loading-xs"></span>
                                     </button>
                                 </div>
                             </div>
                         </div>
                     </template>
-                    <p class="text-[10px] text-gray-600 mt-2"
-                        x-text="$store.global.t('serverPresetsHint')">
-                        Select a preset and click the download icon to apply it. Built-in presets (🔒) cannot be deleted.
+                    <p class="text-[10px] text-gray-600 mt-2" x-text="$store.global.t('serverPresetsHint')">
+                        Select a preset and click the download icon to apply it. Built-in presets (🔒) cannot be
+                        deleted.
                     </p>
                 </div>
 
@@ -933,28 +1000,30 @@
                 <dialog id="save_server_preset_modal" class="modal">
                     <div class="modal-box bg-space-900 border border-space-border max-w-sm">
                         <h3 class="font-bold text-lg text-white mb-1"
-                            x-text="editingPresetMode ? ($store.global.t('editServerPreset') || 'Edit Preset') : $store.global.t('saveServerPreset')">Save Server Preset</h3>
+                            x-text="editingPresetMode ? ($store.global.t('editServerPreset') || 'Edit Preset') : $store.global.t('saveServerPreset')">
+                            Save Server Preset</h3>
                         <p class="text-xs text-gray-500 mb-4"
-                            x-text="editingPresetMode ? ($store.global.t('editServerPresetDesc') || 'Update the preset name or description.') : $store.global.t('saveServerPresetDesc')"></p>
+                            x-text="editingPresetMode ? ($store.global.t('editServerPresetDesc') || 'Update the preset name or description.') : $store.global.t('saveServerPresetDesc')">
+                        </p>
                         <input type="text" x-model="newServerPresetName" maxlength="50"
                             class="input input-sm w-full font-mono text-xs !bg-space-800 !border-space-border !text-white mb-2"
                             :placeholder="$store.global.t('presetNamePlaceholder')"
                             @keydown.enter.prevent="editingPresetMode ? executeEditServerPreset() : executeSaveServerPreset(newServerPresetName)">
-                        <textarea x-model="newServerPresetDescription"
-                            x-ref="presetDescTextarea"
+                        <textarea x-model="newServerPresetDescription" x-ref="presetDescTextarea"
                             x-effect="if(newServerPresetDescription !== undefined && $refs.presetDescTextarea) { $refs.presetDescTextarea.style.height = 'auto'; $refs.presetDescTextarea.style.height = $refs.presetDescTextarea.scrollHeight + 'px'; }"
                             @input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"
                             class="textarea textarea-sm w-full font-mono text-xs !bg-space-800 !border-space-border !text-white mb-4 resize-none overflow-hidden"
-                            rows="1" maxlength="200"
-                            :placeholder="$store.global.t('presetDescPlaceholder')"></textarea>
+                            rows="1" maxlength="200" :placeholder="$store.global.t('presetDescPlaceholder')"></textarea>
                         <div class="modal-action">
                             <form method="dialog">
                                 <button class="btn btn-sm btn-ghost" x-text="$store.global.t('cancel')">Cancel</button>
                             </form>
-                            <button class="btn btn-sm bg-neon-purple text-white hover:bg-neon-purple/80"
+                            <button class="btn btn-sm bg-primary text-white hover:bg-primary/80"
                                 @click="editingPresetMode ? executeEditServerPreset() : executeSaveServerPreset(newServerPresetName)"
                                 :disabled="!newServerPresetName.trim() || savingServerPreset">
-                                <span x-show="!savingServerPreset" x-text="editingPresetMode ? ($store.global.t('saveChanges') || 'Save Changes') : $store.global.t('savePreset')">Save Preset</span>
+                                <span x-show="!savingServerPreset"
+                                    x-text="editingPresetMode ? ($store.global.t('saveChanges') || 'Save Changes') : $store.global.t('savePreset')">Save
+                                    Preset</span>
                                 <span x-show="savingServerPreset" class="loading loading-spinner loading-xs"></span>
                             </button>
                         </div>
@@ -967,7 +1036,7 @@
 
                 <!-- Runtime Configuration -->
                 <div class="space-y-4">
-                    
+
                     <div class="flex items-center gap-2 mb-1 px-1">
                         <span class="text-[10px] uppercase text-gray-500 font-bold tracking-widest"
                             x-text="$store.global.t('runtimeConfig')">Common Settings</span>
@@ -985,12 +1054,10 @@
                                     <p class="text-[11px] text-gray-500 leading-tight">Enables verbose console logging,
                                         API interaction dumps, and strategy health metrics.</p>
                                 </div>
-                                <label class="relative inline-flex items-center cursor-pointer" @click.stop>
+                                <label class="toggle-settings" @click.stop>
                                     <input type="checkbox" class="sr-only peer" :checked="serverConfig.devMode"
-                                        @change="toggleDevMode($el.checked)">
-                                    <div
-                                        class="w-9 h-5 bg-space-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-gray-600 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neon-purple peer-checked:after:bg-white">
-                                    </div>
+                                        @change="toggleDevMode($event.target.checked)">
+                                    <span class="toggle-settings-track" aria-hidden="true"></span>
                                 </label>
                             </div>
 
@@ -1009,12 +1076,10 @@
                                         <p class="text-[10px] text-gray-500"
                                             x-text="$store.global.t('screenshotModeDesc')"></p>
                                     </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
+                                    <label class="toggle-settings">
                                         <input type="checkbox" class="sr-only peer" x-model="$store.settings.redactMode"
                                             @change="$store.settings.saveSettings(true)">
-                                        <div
-                                            class="w-9 h-5 bg-space-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-gray-600 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neon-purple peer-checked:after:bg-white">
-                                        </div>
+                                        <span class="toggle-settings-track" aria-hidden="true"></span>
                                     </label>
                                 </div>
 
@@ -1027,13 +1092,11 @@
                                         <p class="text-[10px] text-gray-500"
                                             x-text="$store.global.t('debugLoggingDesc')"></p>
                                     </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
+                                    <label class="toggle-settings">
                                         <input type="checkbox" class="sr-only peer"
                                             x-model="$store.settings.debugLogging"
                                             @change="$store.settings.saveSettings(true)">
-                                        <div
-                                            class="w-9 h-5 bg-space-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-gray-600 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neon-purple peer-checked:after:bg-white">
-                                        </div>
+                                        <span class="toggle-settings-track" aria-hidden="true"></span>
                                     </label>
                                 </div>
 
@@ -1046,12 +1109,10 @@
                                         <p class="text-[10px] text-gray-500"
                                             x-text="$store.global.t('logExportToggleDesc')"></p>
                                     </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
+                                    <label class="toggle-settings">
                                         <input type="checkbox" class="sr-only peer" x-model="$store.settings.logExport"
                                             @change="$store.settings.saveSettings(true)">
-                                        <div
-                                            class="w-9 h-5 bg-space-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-gray-600 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neon-purple peer-checked:after:bg-white">
-                                        </div>
+                                        <span class="toggle-settings-track" aria-hidden="true"></span>
                                     </label>
                                 </div>
 
@@ -1064,13 +1125,11 @@
                                         <p class="text-[10px] text-gray-500"
                                             x-text="$store.global.t('healthInspectorToggleDesc')"></p>
                                     </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
+                                    <label class="toggle-settings">
                                         <input type="checkbox" class="sr-only peer"
                                             x-model="$store.settings.healthInspector"
                                             @change="$store.settings.saveSettings(true)">
-                                        <div
-                                            class="w-9 h-5 bg-space-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-gray-600 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neon-purple peer-checked:after:bg-white">
-                                        </div>
+                                        <span class="toggle-settings-track" aria-hidden="true"></span>
                                     </label>
                                 </div>
 
@@ -1087,26 +1146,22 @@
                                                     class="text-[9px] text-gray-500 uppercase font-bold transition-colors duration-200"
                                                     :class="$store.settings.placeholderIncludeReal ? 'text-neon-purple' : 'text-gray-600'">Include
                                                     Real</span>
-                                                <label class="relative inline-flex items-center cursor-pointer">
+                                                <label class="toggle-settings" @click.stop>
                                                     <input type="checkbox" class="sr-only peer"
                                                         x-model="$store.settings.placeholderIncludeReal"
                                                         @change="$store.settings.saveSettings(true)">
-                                                    <div
-                                                        class="w-9 h-5 bg-space-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-gray-600 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neon-purple peer-checked:after:bg-white">
-                                                    </div>
+                                                    <span class="toggle-settings-track" aria-hidden="true"></span>
                                                 </label>
                                             </div>
                                         </div>
                                         <p class="text-[10px] text-gray-500"
                                             x-text="$store.global.t('placeholderDataDesc')"></p>
                                     </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
+                                    <label class="toggle-settings">
                                         <input type="checkbox" class="sr-only peer"
                                             x-model="$store.settings.placeholderMode"
                                             @change="$store.settings.saveSettings(true)">
-                                        <div
-                                            class="w-9 h-5 bg-space-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-gray-600 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neon-purple peer-checked:after:bg-white">
-                                        </div>
+                                        <span class="toggle-settings-track" aria-hidden="true"></span>
                                     </label>
                                 </div>
                             </div>
@@ -1119,8 +1174,11 @@
                                     sessions to
                                     disk for faster restarts.</p>
                             </div>
-                            <input type="checkbox" class="toggle toggle-xs toggle-primary"
-                                :checked="serverConfig.persistTokenCache" @click.stop>
+                            <label class="toggle-settings" @click.stop>
+                                <input type="checkbox" class="sr-only peer"
+                                    :checked="serverConfig.persistTokenCache">
+                                <span class="toggle-settings-track" aria-hidden="true"></span>
+                            </label>
                         </div>
 
                         <!-- Max Accounts Slider -->
