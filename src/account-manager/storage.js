@@ -10,7 +10,6 @@ import { dirname } from 'path';
 import { ACCOUNT_CONFIG_PATH } from '../constants.js';
 import { getAuthStatus } from '../auth/database.js';
 import { logger } from '../utils/logger.js';
-import { generateFingerprint, updateFingerprintVersion } from '../utils/fingerprint.js';
 
 /**
  * Load accounts from the config file
@@ -40,12 +39,7 @@ export async function loadAccounts(configPath = ACCOUNT_CONFIG_PATH) {
             quota: acc.quota || { models: {}, lastChecked: null },
             // Quota threshold settings (per-account and per-model overrides)
             quotaThreshold: acc.quotaThreshold,  // undefined means use global
-            modelQuotaThresholds: acc.modelQuotaThresholds || {},
-            // Fingerprint management
-            fingerprint: acc.fingerprint
-                ? updateFingerprintVersion(acc.fingerprint)
-                : generateFingerprint(),
-            fingerprintHistory: acc.fingerprintHistory || []
+            modelQuotaThresholds: acc.modelQuotaThresholds || {}
         }));
 
         const settings = config.settings || {};
@@ -84,8 +78,7 @@ export function loadDefaultAccount(dbPath) {
                 email: authData.email || 'default@antigravity',
                 source: 'database',
                 lastUsed: null,
-                modelRateLimits: {},
-                fingerprint: generateFingerprint()
+                modelRateLimits: {}
             };
 
             const tokenCache = new Map();
@@ -139,10 +132,7 @@ export async function saveAccounts(configPath, accounts, settings, activeIndex) 
                 quota: acc.quota || { models: {}, lastChecked: null },
                 // Persist quota threshold settings
                 quotaThreshold: acc.quotaThreshold,  // undefined omitted from JSON
-                modelQuotaThresholds: Object.keys(acc.modelQuotaThresholds || {}).length > 0 ? acc.modelQuotaThresholds : undefined,
-                // Persist fingerprint data
-                fingerprint: acc.fingerprint,
-                fingerprintHistory: acc.fingerprintHistory && acc.fingerprintHistory.length > 0 ? acc.fingerprintHistory : undefined
+                modelQuotaThresholds: Object.keys(acc.modelQuotaThresholds || {}).length > 0 ? acc.modelQuotaThresholds : undefined
             })),
             settings: settings,
             activeIndex: activeIndex

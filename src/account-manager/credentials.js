@@ -235,7 +235,7 @@ export async function discoverProject(token, projectId = undefined) {
                     'Content-Type': 'application/json',
                     ...LOAD_CODE_ASSIST_HEADERS
                 },
-                body: JSON.stringify({ metadata })
+                body: JSON.stringify({ metadata, mode: 1 })
             });
 
             if (!response.ok) {

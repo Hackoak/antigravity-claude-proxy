@@ -139,7 +139,7 @@ export async function sendMessage(anthropicRequest, accountManager, fallbackEnab
             // Get token and project for this account
             const token = await accountManager.getTokenForAccount(account);
             const project = await accountManager.getProjectForAccount(account, token);
-            const payload = buildCloudCodeRequest(anthropicRequest, project);
+            const payload = buildCloudCodeRequest(anthropicRequest, project, account.email);
 
             logger.debug(`[CloudCode] Sending request for model: ${model}`);
 
@@ -157,7 +157,7 @@ export async function sendMessage(anthropicRequest, accountManager, fallbackEnab
 
                     const response = await throttledFetch(url, {
                         method: 'POST',
-                        headers: buildHeaders(token, model, isThinking ? 'text/event-stream' : 'application/json', account.fingerprint),
+                        headers: buildHeaders(token, model, isThinking ? 'text/event-stream' : 'application/json'),
                         body: JSON.stringify(payload)
                     });
 
