@@ -75,8 +75,8 @@
                 <div class="view-card">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                         <div>
-                            <h4 class="text-sm font-bold text-white mb-1">Display Language</h4>
-                            <p class="text-xs text-gray-500">Choose your preferred language for the interface.</p>
+                            <h4 class="text-sm font-bold text-white mb-1" x-text="$store.global.t('displayLanguage')">Display Language</h4>
+                            <p class="text-xs text-gray-500" x-text="$store.global.t('languageDesc')">Choose your preferred language for the interface.</p>
                         </div>
                         <select
                             class="select select-sm bg-space-950 border-space-border font-mono text-xs focus:border-primary-soft/50 ring-0 focus:outline-none"
@@ -1656,8 +1656,8 @@
             model mapping will be lost.</p>
         <div class="modal-action">
             <form method="dialog">
-                <button class="btn btn-sm btn-ghost">Cancel</button>
-                <button class="btn btn-sm btn-error" @click="executeRestore()">Confirm Reset</button>
+                <button class="btn btn-sm btn-ghost" x-text="$store.global.t('cancel')">Cancel</button>
+                <button class="btn btn-sm btn-error" @click="executeRestore()" x-text="$store.global.t('confirmReset')">Confirm Reset</button>
             </form>
         </div>
     </div>
@@ -1704,10 +1704,10 @@
                 x-text="'Load &quot;' + pendingPresetName + '&quot; and lose current changes?'"></span>
         </p>
         <div class="modal-action">
-            <button class="btn btn-sm btn-ghost" @click="cancelLoadPreset()">Cancel</button>
+            <button class="btn btn-sm btn-ghost" @click="cancelLoadPreset()" x-text="$store.global.t('cancel')">Cancel</button>
             <button
                 class="btn btn-sm btn-warning bg-yellow-600/20 border-yellow-500/50 text-yellow-500 hover:bg-yellow-600/40"
-                @click="confirmLoadPreset()">Load Preset</button>
+                @click="confirmLoadPreset()" x-text="$store.global.t('loadPresetButton')">Load Preset</button>
         </div>
     </div>
 </dialog>

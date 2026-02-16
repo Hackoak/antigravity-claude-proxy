@@ -11,7 +11,7 @@
                 </div>
             </div>
             <p class="text-sm text-gray-500 mt-1"
-                x-text="$store.data.quotaRows.length + ' active models across ' + $store.data.accounts.length + ' accounts'">
+                x-text="$store.global.t('activeModelsAcross', { count: $store.data.quotaRows.length, accounts: $store.data.accounts.length })">
             </p>
         </div>
 
@@ -109,14 +109,14 @@
                 class="btn h-8 px-3 ml-1 border border-space-border/50 bg-space-900 hover:bg-space-800 hover:border-space-border hover:text-white transition-all gap-1.5 min-h-0 rounded-md"
                 :class="$store.settings.showAllAccounts ? 'text-primary border-primary/30 bg-primary/5' : 'text-gray-400'"
                 @click="$store.settings.toggle('showAllAccounts')"
-                :title="$store.settings.showAllAccounts ? 'Cap account rows' : 'Show all account rows'">
+                :title="$store.settings.showAllAccounts ? $store.global.t('capAccountRowsTitle') : $store.global.t('showAllAccountsTitle')">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <span class="text-[10px] font-medium uppercase tracking-wide"
-                    x-text="$store.settings.showAllAccounts ? 'All' : 'Capped'"></span>
+                    x-text="$store.settings.showAllAccounts ? $store.global.t('all') : $store.global.t('capped')"></span>
             </button>
         </div>
     </div>
@@ -306,13 +306,13 @@
                                         <!-- "+N more" expand button -->
                                         <button x-show="getHiddenCount(row) > 0" @click="toggleExpanded(row.modelId)"
                                             class="text-[10px] font-mono text-primary/70 hover:text-primary transition-colors text-left pl-[88px] py-0.5 cursor-pointer"
-                                            x-text="'+' + getHiddenCount(row) + ' more'"></button>
+                                            x-text="'+' + getHiddenCount(row) + ' ' + $store.global.t('moreLabel')"></button>
                                         <!-- "Show less" collapse button -->
                                         <button
                                             x-show="isExpanded(row.modelId) && !$store.settings.showAllAccounts && row.quotaInfo.length > window.AppConstants.LIMITS.ACCOUNT_BREAKDOWN_LIMIT"
                                             @click="toggleExpanded(row.modelId)"
-                                            class="text-[10px] font-mono text-gray-500 hover:text-gray-300 transition-colors text-left pl-[88px] py-0.5 cursor-pointer">Show
-                                            less</button>
+                                            class="text-[10px] font-mono text-gray-500 hover:text-gray-300 transition-colors text-left pl-[88px] py-0.5 cursor-pointer"
+                                            x-text="$store.global.t('showLess')">Show less</button>
                                     </div>
                                 </div>
                             </td>

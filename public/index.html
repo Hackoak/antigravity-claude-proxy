@@ -91,8 +91,7 @@
                 </div>
                 <div class="flex flex-col" x-show="sidebarOpen">
                     <span class="font-bold text-gray-100 tracking-tight">Antigravity</span>
-                    <span class="text-[9px] text-gray-500 font-mono uppercase tracking-widest">CLAUDE PROXY SYSTEM
-                        v2.5.0</span>
+                    <span class="text-[9px] text-gray-500 font-mono uppercase tracking-widest" x-text="$store.global.t('systemDesc') + ' v' + $store.global.version">CLAUDE PROXY SYSTEM</span>
                 </div>
             </div>
 
@@ -108,7 +107,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                     </svg>
-                    <span x-show="sidebarOpen">Dashboard</span>
+                    <span x-show="sidebarOpen" x-text="$store.global.t('dashboard')">Dashboard</span>
                 </button>
 
                 <!-- Models -->
@@ -121,7 +120,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
                     </svg>
-                    <span x-show="sidebarOpen">Models</span>
+                    <span x-show="sidebarOpen" x-text="$store.global.t('models')">Models</span>
                 </button>
 
                 <!-- Logs -->
@@ -134,12 +133,12 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                     </svg>
-                    <span x-show="sidebarOpen">Logs</span>
+                    <span x-show="sidebarOpen" x-text="$store.global.t('logs')">Logs</span>
                 </button>
             <!-- </nav> -->
 
             <div class="py-3 mt-8 mb-2" x-show="sidebarOpen">
-                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3">Configuration</span>
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3" x-text="$store.global.t('configuration')">Configuration</span>
             </div>
 
             <!-- <nav class="p-3 space-y-1"> -->
@@ -153,7 +152,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
-                    <span x-show="sidebarOpen">Accounts</span>
+                    <span x-show="sidebarOpen" x-text="$store.global.t('accounts')">Accounts</span>
                 </button>
 
                 <!-- Settings -->
@@ -168,7 +167,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span x-show="sidebarOpen">Settings</span>
+                    <span x-show="sidebarOpen" x-text="$store.global.t('settings')">Settings</span>
                 </button>
             </nav>
 
@@ -189,7 +188,7 @@
 
                     <button @click="sidebarOpen = !sidebarOpen"
                         class="p-2 rounded-md bg-space-900 border border-space-800 text-gray-400 hover:text-white hover:bg-space-800 transition-all group"
-                        :title="sidebarOpen ? 'Collapse Sidebar' : 'Expand Sidebar'">
+                        :title="sidebarOpen ? $store.global.t('collapseSidebar') : $store.global.t('expandSidebar')">
                         <!-- Collapse Icon (When Open) -->
                         <svg x-show="sidebarOpen" width="16" height="16" viewBox="0 0 16 16" fill="none"
                             xmlns="http://www.w3.org/2000/svg" class="w-4 h-4">
@@ -232,7 +231,7 @@
                     <svg class="w-4 h-4 text-space-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
-                    <span x-text="$store.global.activeTab.charAt(0).toUpperCase() + $store.global.activeTab.slice(1)"
+                    <span x-text="$store.global.t($store.global.activeTab)"
                         class="text-white"></span>
                 </div>
 
@@ -244,7 +243,7 @@
                             :class="connectionStatus === 'connected' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : (connectionStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500')">
                         </div>
                         <span class="text-xs font-mono text-gray-400"
-                            x-text="connectionStatus === 'connected' ? 'Connected' : 'Offline'"></span>
+                            x-text="connectionStatus === 'connected' ? $store.global.t('connected') : $store.global.t('offline')"></span>
                     </div>
 
                     <div class="h-4 w-px bg-space-800"></div>
@@ -294,8 +293,8 @@
         <div
             class="modal-box bg-space-950 border border-space-800 text-gray-300 shadow-2xl p-0 overflow-hidden max-w-lg">
             <div class="p-6 border-b border-space-800 bg-space-900/50">
-                <h3 class="font-bold text-lg text-white">Connect Account</h3>
-                <p class="text-sm text-gray-500 mt-1">Link your Google account to access Claude models.</p>
+                <h3 class="font-bold text-lg text-white" x-text="$store.global.t('connectAccount')">Connect Account</h3>
+                <p class="text-sm text-gray-500 mt-1" x-text="$store.global.t('connectAccountDesc')">Link your Google account to access Claude models.</p>
             </div>
 
             <div class="p-6 flex flex-col gap-4">
@@ -316,7 +315,7 @@
                             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                             fill="#EA4335"></path>
                     </svg>
-                    Continue with Google
+                    <span x-text="$store.global.t('continueWithGoogle')">Continue with Google</span>
                 </button>
 
                 <div class="relative py-2">
@@ -324,14 +323,14 @@
                         <div class="w-full border-t border-space-800"></div>
                     </div>
                     <div class="relative flex justify-center text-xs">
-                        <span class="px-2 bg-space-950 text-gray-500">Or continue manually</span>
+                        <span class="px-2 bg-space-950 text-gray-500" x-text="$store.global.t('orContinueManually')">Or continue manually</span>
                     </div>
                 </div>
 
                 <details class="group bg-space-900 border border-space-800 rounded px-4 py-2">
                     <summary
                         class="flex items-center justify-between cursor-pointer text-sm text-gray-400 group-open:text-white pb-1">
-                        <span>Enter Authorization Code</span>
+                        <span x-text="$store.global.t('enterAuthCode')">Enter Authorization Code</span>
                         <svg class="w-4 h-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -339,23 +338,22 @@
                     </summary>
                     <div class="mt-3 text-xs space-y-3 pb-2 pt-2 border-t border-space-800">
                         <div>
-                            <label class="block text-gray-500 mb-1">1. Get Auth URL</label>
+                            <label class="block text-gray-500 mb-1">1. <span x-text="$store.global.t('getAuthUrl')">Get Auth URL</span></label>
                             <div class="flex gap-2">
-                                <input type="text" readonly :value="authUrl || 'Loading...'"
+                                <input type="text" readonly :value="authUrl || $store.global.t('loading')"
                                     class="flex-1 bg-space-950 border border-space-800 rounded px-2 py-1 text-gray-400 select-all">
-                                <button class="text-primary hover:text-white" @click="copyLink">Copy</button>
+                                <button class="text-primary hover:text-white" @click="copyLink" x-text="$store.global.t('copy')">Copy</button>
                             </div>
                         </div>
                         <div>
-                            <label class="block text-gray-500 mb-1">2. Paste Code</label>
+                            <label class="block text-gray-500 mb-1">2. <span x-text="$store.global.t('pasteCode')">Paste Code</span></label>
                             <div class="flex gap-2">
-                                <input type="text" x-model="callbackInput" placeholder="Paste code here"
+                                <input type="text" x-model="callbackInput" :placeholder="$store.global.t('pasteCodePlaceholder')"
                                     class="flex-1 bg-space-950 border border-space-800 rounded px-2 py-1 text-white focus:border-primary focus:outline-none">
                                 <button
                                     class="bg-primary hover:bg-primary-deep text-white px-3 py-1 rounded transition-colors"
-                                    @click="completeManualAuth" :disabled="submitting">
-                                    Submit
-                                </button>
+                                    @click="completeManualAuth" :disabled="submitting"
+                                    x-text="$store.global.t('submit')">Submit</button>
                             </div>
                         </div>
                     </div>
@@ -365,12 +363,12 @@
             <div class="bg-space-900/50 p-4 border-t border-space-800 flex justify-end">
                 <form method="dialog">
                     <button class="text-sm text-gray-500 hover:text-white transition-colors"
-                        @click="resetState()">Cancel</button>
+                        @click="resetState()" x-text="$store.global.t('cancel')">Cancel</button>
                 </form>
             </div>
         </div>
         <form method="dialog" class="modal-backdrop">
-            <button type="button" @click="resetState()">close</button>
+            <button type="button" @click="resetState()" x-text="$store.global.t('close')">close</button>
         </form>
     </dialog>
 
