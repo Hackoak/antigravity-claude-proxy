@@ -12,6 +12,7 @@ import { logger } from './utils/logger.js';
 import { config } from './config.js';
 import { getStrategyLabel, STRATEGY_NAMES, DEFAULT_STRATEGY } from './account-manager/strategies/index.js';
 import { getPackageVersion } from './utils/helpers.js';
+import tlsClient from './utils/tls-client.js';
 import path from 'path';
 import os from 'os';
 
@@ -159,8 +160,15 @@ ${environmentSection}
 });
 
 // Graceful shutdown
-const shutdown = () => {
+const shutdown = async () => {
     logger.info('Shutting down server...');
+
+    try {
+        await tlsClient.exit();
+    } catch (err) {
+        logger.error('Error shutting down TLS client:', err);
+    }
+
     server.close(() => {
         logger.success('Server stopped');
         process.exit(0);

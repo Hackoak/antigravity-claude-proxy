@@ -30,34 +30,35 @@ function getAntigravityDbPath() {
  * Generate platform-specific User-Agent string.
  * @returns {string} User-Agent in format "antigravity/version os/arch"
  */
-function getPlatformUserAgent() {
+export function getPlatformUserAgent() {
     const os = platform();
     const architecture = arch();
-    return `antigravity/${ANTIGRAVITY_VERSION} ${os}/${architecture}`;
+    return `antigravity/1.16.5 ${os}/${architecture}`;
 }
 
 // IDE Type enum (numeric values as expected by Cloud Code API)
 // Reference: Antigravity binary analysis - google.internal.cloud.code.v1internal.ClientMetadata.IdeType
 export const IDE_TYPE = {
     UNSPECIFIED: 0,
-    JETSKI: 5,         // Internal codename for Gemini CLI
-    ANTIGRAVITY: 6,
+    JETSKI: 10,        // Internal codename for Gemini CLI
+    ANTIGRAVITY: 9,
     PLUGINS: 7
 };
 
-// Platform enum
-// Reference: Antigravity binary analysis - google.internal.cloud.code.v1internal.ClientMetadata.Platform
+// Platform enum (as specified in Antigravity binary)
 export const PLATFORM = {
     UNSPECIFIED: 0,
-    WINDOWS: 1,
-    LINUX: 2,
-    MACOS: 3
+    DARWIN_AMD64: 1,
+    DARWIN_ARM64: 2,
+    LINUX_AMD64: 3,
+    LINUX_ARM64: 4,
+    WINDOWS_AMD64: 5
 };
 
-// Plugin type enum
+// Plugin type enum (as specified in Antigravity binary)
 export const PLUGIN_TYPE = {
     UNSPECIFIED: 0,
-    DUET_AI: 1,
+    CLOUD_CODE: 1,
     GEMINI: 2
 };
 
@@ -66,12 +67,17 @@ export const PLUGIN_TYPE = {
  * @returns {number} Platform enum value
  */
 function getPlatformEnum() {
-    switch (platform()) {
-        case 'darwin': return PLATFORM.MACOS;
-        case 'win32': return PLATFORM.WINDOWS;
-        case 'linux': return PLATFORM.LINUX;
-        default: return PLATFORM.UNSPECIFIED;
+    const os = platform();
+    const architecture = arch();
+
+    if (os === 'darwin') {
+        return architecture === 'arm64' ? PLATFORM.DARWIN_ARM64 : PLATFORM.DARWIN_AMD64;
+    } else if (os === 'linux') {
+        return architecture === 'arm64' ? PLATFORM.LINUX_ARM64 : PLATFORM.LINUX_AMD64;
+    } else if (os === 'win32') {
+        return PLATFORM.WINDOWS_AMD64;
     }
+    return PLATFORM.UNSPECIFIED;
 }
 
 // Centralized client metadata (used in request bodies for loadCodeAssist, onboardUser, etc.)
@@ -92,14 +98,12 @@ export const ANTIGRAVITY_ENDPOINT_FALLBACKS = [
     ANTIGRAVITY_ENDPOINT_PROD
 ];
 
-// Antigravity version used for User-Agent
-export const ANTIGRAVITY_VERSION = '1.16.5';
-
 // Required headers for Antigravity API requests
+// Headers for general Antigravity API requests
+// Strictly matches the generic 'u' method in main.js
 export const ANTIGRAVITY_HEADERS = {
     'User-Agent': getPlatformUserAgent(),
-    'X-Goog-Api-Client': 'google-cloud-sdk vscode_cloudshelleditor/0.1',
-    'Client-Metadata': JSON.stringify(CLIENT_METADATA)
+    'Content-Type': 'application/json'
 };
 
 // Endpoint order for loadCodeAssist (prod first)
@@ -113,6 +117,7 @@ export const LOAD_CODE_ASSIST_ENDPOINTS = [
 export const ONBOARD_USER_ENDPOINTS = ANTIGRAVITY_ENDPOINT_FALLBACKS;
 
 // Headers for loadCodeAssist API
+// Matches the minimal headers seen in the binary's u() method
 export const LOAD_CODE_ASSIST_HEADERS = ANTIGRAVITY_HEADERS;
 
 // Default project ID if none can be discovered

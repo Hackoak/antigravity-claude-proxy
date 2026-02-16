@@ -139,7 +139,7 @@ export async function* sendMessageStream(anthropicRequest, accountManager, fallb
             // Get token and project for this account
             const token = await accountManager.getTokenForAccount(account);
             const project = await accountManager.getProjectForAccount(account, token);
-            const payload = buildCloudCodeRequest(anthropicRequest, project);
+            const payload = buildCloudCodeRequest(anthropicRequest, project, account.email);
 
             logger.debug(`[CloudCode] Starting stream for model: ${model}`);
 
@@ -155,7 +155,7 @@ export async function* sendMessageStream(anthropicRequest, accountManager, fallb
 
                     const response = await throttledFetch(url, {
                         method: 'POST',
-                        headers: buildHeaders(token, model, 'text/event-stream', account.fingerprint),
+                        headers: buildHeaders(token, model, 'text/event-stream'),
                         body: JSON.stringify(payload)
                     });
 
@@ -336,7 +336,7 @@ export async function* sendMessageStream(anthropicRequest, accountManager, fallb
                             // Refetch the response
                             currentResponse = await throttledFetch(url, {
                                 method: 'POST',
-                                headers: buildHeaders(token, model, 'text/event-stream', account.fingerprint),
+                                headers: buildHeaders(token, model, 'text/event-stream'),
                                 body: JSON.stringify(payload)
                             });
 
@@ -369,7 +369,7 @@ export async function* sendMessageStream(anthropicRequest, accountManager, fallb
                                     await sleep(1000);
                                     currentResponse = await throttledFetch(url, {
                                         method: 'POST',
-                                        headers: buildHeaders(token, model, 'text/event-stream', account.fingerprint),
+                                        headers: buildHeaders(token, model, 'text/event-stream'),
                                         body: JSON.stringify(payload)
                                     });
                                     if (currentResponse.ok) {

@@ -49,12 +49,12 @@ export async function listModels(token) {
     const modelList = Object.entries(data.models)
         .filter(([modelId]) => isSupportedModel(modelId))
         .map(([modelId, modelData]) => ({
-        id: modelId,
-        object: 'model',
-        created: Math.floor(Date.now() / 1000),
-        owned_by: 'anthropic',
-        description: modelData.displayName || modelId
-    }));
+            id: modelId,
+            object: 'model',
+            created: Math.floor(Date.now() / 1000),
+            owned_by: 'anthropic',
+            description: modelData.displayName || modelId
+        }));
 
     // Warm the model validation cache
     modelCache.validModels = new Set(modelList.map(m => m.id));
@@ -183,10 +183,8 @@ export async function getSubscriptionTier(token) {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({
-                    metadata: {
-                        ...CLIENT_METADATA,
-                        duetProject: 'rising-fact-p41fc'
-                    }
+                    metadata: CLIENT_METADATA,
+                    mode: 1
                 })
             });
 

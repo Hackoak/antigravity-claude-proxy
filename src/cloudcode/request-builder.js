@@ -13,21 +13,21 @@ import {
 } from '../constants.js';
 import { convertAnthropicToGoogle } from '../format/index.js';
 import { deriveSessionId } from './session-manager.js';
-import { buildFingerprintHeaders } from '../utils/fingerprint.js';
 
 /**
  * Build the wrapped request body for Cloud Code API
  *
  * @param {Object} anthropicRequest - The Anthropic-format request
  * @param {string} projectId - The project ID to use
+ * @param {string} accountEmail - The account email for session ID derivation
  * @returns {Object} The Cloud Code API request payload
  */
-export function buildCloudCodeRequest(anthropicRequest, projectId) {
+export function buildCloudCodeRequest(anthropicRequest, projectId, accountEmail) {
     const model = anthropicRequest.model;
     const googleRequest = convertAnthropicToGoogle(anthropicRequest);
 
     // Use stable session ID derived from first user message for cache continuity
-    googleRequest.sessionId = deriveSessionId(anthropicRequest);
+    googleRequest.sessionId = deriveSessionId(anthropicRequest, accountEmail);
 
     // Build system instruction parts array with [ignore] tags to prevent model from
     // identifying as "Antigravity" (fixes GitHub issue #76)
@@ -70,17 +70,13 @@ export function buildCloudCodeRequest(anthropicRequest, projectId) {
  * @param {string} token - OAuth access token
  * @param {string} model - Model name
  * @param {string} accept - Accept header value (default: 'application/json')
- * @param {Object} [fingerprint] - Optional device fingerprint for header randomization
  * @returns {Object} Headers object
  */
-export function buildHeaders(token, model, accept = 'application/json', fingerprint = null) {
-    const fingerprintHeaders = fingerprint ? buildFingerprintHeaders(fingerprint) : {};
-
+export function buildHeaders(token, model, accept = 'application/json') {
     const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-        ...ANTIGRAVITY_HEADERS,
-        ...fingerprintHeaders
+        ...ANTIGRAVITY_HEADERS
     };
 
     const modelFamily = getModelFamily(model);
