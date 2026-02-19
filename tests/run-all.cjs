@@ -23,7 +23,8 @@ const tests = [
     { name: 'Schema Sanitizer', file: 'test-schema-sanitizer.cjs' },
     { name: 'Streaming Whitespace', file: 'test-streaming-whitespace.cjs' },
     { name: '403 Account Rotation (Unit)', file: 'test-403-account-rotation.cjs' },
-    { name: '403 Account Rotation (Integration)', file: 'test-403-integration.cjs' }
+    { name: '403 Account Rotation (Integration)', file: 'test-403-integration.cjs' },
+    { name: 'Version Detection', file: 'test-version-detection.js' }
 ];
 
 async function runTest(test) {

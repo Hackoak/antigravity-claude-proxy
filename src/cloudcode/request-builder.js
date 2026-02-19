@@ -70,14 +70,20 @@ export function buildCloudCodeRequest(anthropicRequest, projectId, accountEmail)
  * @param {string} token - OAuth access token
  * @param {string} model - Model name
  * @param {string} accept - Accept header value (default: 'application/json')
+ * @param {string} [sessionId] - Optional session ID for X-Machine-Session-Id header
  * @returns {Object} Headers object
  */
-export function buildHeaders(token, model, accept = 'application/json') {
+export function buildHeaders(token, model, accept = 'application/json', sessionId) {
     const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
         ...ANTIGRAVITY_HEADERS
     };
+
+    // Add session ID header if provided (matches Antigravity binary behavior)
+    if (sessionId) {
+        headers['X-Machine-Session-Id'] = sessionId;
+    }
 
     const modelFamily = getModelFamily(model);
 
