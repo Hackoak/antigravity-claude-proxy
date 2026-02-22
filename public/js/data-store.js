@@ -438,8 +438,8 @@ document.addEventListener('alpine:init', () => {
                 'claude-opus-4-6-thinking',
                 'claude-sonnet-4-5-thinking',
                 'claude-sonnet-4-5',
-                'gemini-3-pro-high',
-                'gemini-3-pro-low',
+                'gemini-3.1-pro-high',
+                'gemini-3.1-pro-low',
                 'gemini-3-flash'
             ];
 
