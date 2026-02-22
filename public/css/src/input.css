@@ -311,9 +311,10 @@ p, .view-card p, .view-header-title p, .text-gray-500, .text-gray-400 {
   border-radius: var(--card-radius);
   padding: 1.5rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(135deg,
+  /* background: linear-gradient(135deg,
       rgba(15, 15, 17, 0.75) 0%,
-      rgba(18, 18, 20, 0.70) 100%);
+      rgba(18, 18, 20, 0.70) 100%); */
+  background-color: rgb(17 17 17 / var(--tw-bg-opacity, 1));
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   box-shadow:
