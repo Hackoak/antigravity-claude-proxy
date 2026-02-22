@@ -329,7 +329,7 @@ window.translations.zh = {
     mcpCliDesc: "启用实验性 MCP 集成，减少上下文消耗，提高工具调用可靠性。",
     gemini1mMode: "Gemini 1M 上下文模式",
     gemini1mDesc: "为 Gemini 模型添加 [1m] 后缀以支持 1M 上下文窗口。",
-    gemini1mWarning: "⚠ 大上下文可能降低 Gemini-3-Pro 性能。",
+    gemini1mWarning: "⚠ 大上下文可能降低 Gemini 性能。",
     clickToSet: "点击进行配置...",
     none: "无",
     // Quota Distribution

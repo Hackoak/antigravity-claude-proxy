@@ -2,7 +2,6 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import { config } from '../config.js';
-import tlsClient from './tls-client.js';
 
 /**
  * Shared Utility Functions
@@ -87,7 +86,7 @@ export async function throttledFetch(url, options) {
             await sleep(delayMs);
         }
     }
-    return tlsClient.fetch(url, options);
+    return fetch(url, options);
 }
 
 /**

@@ -13,7 +13,7 @@
 | Model ID            | Description                     |
 | ------------------- | ------------------------------- |
 | `gemini-3-flash`    | Gemini 3 Flash with thinking    |
-| `gemini-3-pro-low`  | Gemini 3 Pro Low with thinking  |
-| `gemini-3-pro-high` | Gemini 3 Pro High with thinking |
+| `gemini-3.1-pro-low`  | Gemini 3.1 Pro Low with thinking  |
+| `gemini-3.1-pro-high` | Gemini 3.1 Pro High with thinking |
 
 Gemini models include full thinking support with `thoughtSignature` handling for multi-turn conversations.

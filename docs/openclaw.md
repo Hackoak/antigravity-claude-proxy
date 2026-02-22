@@ -36,8 +36,8 @@ Add the following configuration:
             "maxTokens": 65536
           },
           {
-            "id": "gemini-3-pro-high",
-            "name": "Gemini 3 Pro High",
+            "id": "gemini-3.1-pro-high",
+            "name": "Gemini 3.1 Pro High",
             "reasoning": true,
             "input": ["text", "image"],
             "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
@@ -79,7 +79,7 @@ Add the following configuration:
     "defaults": {
       "model": {
         "primary": "antigravity-proxy/gemini-3-flash",
-        "fallbacks": ["antigravity-proxy/gemini-3-pro-high"]
+        "fallbacks": ["antigravity-proxy/gemini-3.1-pro-high"]
       },
       "models": {
         "antigravity-proxy/gemini-3-flash": {}
