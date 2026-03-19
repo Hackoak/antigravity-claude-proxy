@@ -1,5 +1,3 @@
-# ⚠️ DO NOT USE THIS ANYMORE – GOOGLE IS ISSUING TOS VIOLATION BANS FOR THE ACCOUNTS CONNECTED
-
 # Antigravity Claude Proxy
 
 [![npm version](https://img.shields.io/npm/v/antigravity-claude-proxy.svg)](https://www.npmjs.com/package/antigravity-claude-proxy)
@@ -10,22 +8,20 @@ A proxy server that exposes an **Anthropic-compatible API** backed by **Antigrav
 
 ![Antigravity Claude Proxy Banner](images/banner.png)
 
+> **⚠️ WARNING:** Google has been issuing ToS violation bans on accounts connected to this proxy. Use at your own risk.
+
 <details>
 <summary><strong>⚠️ Terms of Service Warning — Read Before Installing</strong></summary>
 
 > [!CAUTION]
 > Using this proxy may violate Google's Terms of Service. A small number of users have reported their Google accounts being **banned** or **shadow-banned** (restricted access without explicit notification).
 >
-> **High-risk scenarios:**
-> - 🚨 **Fresh Google accounts** have a very high chance of getting banned
-> - 🚨 **New accounts with Pro/Ultra subscriptions** are frequently flagged and banned
->
 > **By using this proxy, you acknowledge:**
 > - This is an unofficial tool not endorsed by Google
 > - Your account may be suspended or permanently banned
 > - You assume all risks associated with using this proxy
 >
-> **Recommendation:** Use an established Google account that you don't rely on for critical services. Avoid creating new accounts specifically for this proxy.
+> **Recommendation:** Do not use your main account. Use a burner account instead, and optionally add it to your main account's family plan if needed.
 
 </details>
 
@@ -83,8 +79,9 @@ npm start
 ### 1. Start the Proxy Server
 
 ```bash
-# If installed via npm
-antigravity-claude-proxy start
+# If installed globally
+acc start
+# or: antigravity-claude-proxy start
 
 # If using npx
 npx antigravity-claude-proxy@latest start
@@ -93,7 +90,16 @@ npx antigravity-claude-proxy@latest start
 npm start
 ```
 
-The server runs on `http://localhost:8080` by default.
+The server launches as a **background process** on `http://localhost:8080` by default and survives terminal closure.
+
+| Command | Description |
+| :--- | :--- |
+| `acc start` | Launch proxy in the background |
+| `acc stop` | Shut down the proxy |
+| `acc restart` | Restart the proxy |
+| `acc status` | Check proxy health and PID |
+| `acc ui` | Open the web dashboard |
+| `acc start --log` | Run in foreground with visible logs |
 
 ### 2. Link Account(s)
 
@@ -177,9 +183,9 @@ Add this configuration:
     "ANTHROPIC_BASE_URL": "http://localhost:8080",
     "ANTHROPIC_MODEL": "claude-opus-4-6-thinking",
     "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-4-6-thinking",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4-5-thinking",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-sonnet-4-5",
-    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-4-5-thinking",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4-6-thinking",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-sonnet-4-6",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-4-6-thinking",
     "ENABLE_EXPERIMENTAL_MCP_CLI": "true"
   }
 }
